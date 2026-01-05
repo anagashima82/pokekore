@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "fetch-ar-prices": "npx ts-node --transpile-only scripts/fetch-ar-prices.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",
@@ -25,6 +26,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
     "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }
