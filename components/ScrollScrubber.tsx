@@ -197,36 +197,48 @@ export default function ScrollScrubber({ seriesCodes }: ScrollScrubberProps) {
 
   return (
     <>
-      {/* スクラバーバー */}
+      {/* スクラバーバー - タッチ領域を広く */}
       <div
         ref={scrubberRef}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onMouseDown={handleMouseDown}
-        className={`fixed right-1 top-1/2 -translate-y-1/2 z-[100] flex flex-col items-center transition-opacity duration-200 ${
-          isDragging ? 'opacity-100' : 'opacity-60 hover:opacity-100'
+        className={`fixed right-0 top-1/2 -translate-y-1/2 z-[100] flex items-center justify-end pr-1 transition-opacity duration-200 touch-none ${
+          isDragging ? 'opacity-100' : 'opacity-70'
         }`}
-        style={{ height: 'min(60vh, 400px)' }}
+        style={{
+          height: 'min(70vh, 500px)',
+          width: '44px',  // タッチしやすい幅
+        }}
       >
         {/* バー背景 */}
-        <div className="w-1.5 h-full bg-gray-400/50 rounded-full relative">
+        <div className="w-2 h-full bg-gray-400/60 rounded-full relative shadow-md">
           {/* サム（つまみ） */}
           <div
-            className={`absolute left-1/2 -translate-x-1/2 w-4 h-6 bg-blue-500 rounded-full shadow-lg transition-transform ${
-              isDragging ? 'scale-125' : ''
+            className={`absolute -left-3 w-8 h-10 rounded-lg shadow-lg flex items-center justify-center transition-all duration-100 ${
+              isDragging
+                ? 'bg-blue-600 scale-110'
+                : 'bg-blue-500'
             }`}
             style={{
-              top: `calc(${thumbPosition}% - 12px)`,
+              top: `calc(${thumbPosition}% - 20px)`,
             }}
-          />
+          >
+            {/* つまみの横線デザイン */}
+            <div className="flex flex-col gap-1">
+              <div className="w-4 h-0.5 bg-white/80 rounded-full" />
+              <div className="w-4 h-0.5 bg-white/80 rounded-full" />
+              <div className="w-4 h-0.5 bg-white/80 rounded-full" />
+            </div>
+          </div>
         </div>
       </div>
 
       {/* シリーズラベル（ドラッグ中に表示） */}
       {showLabel && currentSeries && (
         <div
-          className={`fixed right-10 top-1/2 -translate-y-1/2 z-[100] bg-gray-800 text-white px-4 py-2 rounded-lg shadow-xl text-sm font-bold transition-opacity duration-200 ${
+          className={`fixed right-14 top-1/2 -translate-y-1/2 z-[100] bg-gray-900/90 text-white px-4 py-3 rounded-xl shadow-xl text-base font-bold transition-opacity duration-200 ${
             isDragging ? 'opacity-100' : 'opacity-0'
           }`}
         >

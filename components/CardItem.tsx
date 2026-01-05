@@ -15,8 +15,10 @@ interface CardItemProps {
 
 // 長押し時間（ミリ秒）
 const LONG_PRESS_DURATION = 500;
-// スクロール検出の閾値（ピクセル）- 小さくしてすぐスクロールを検知
-const SCROLL_THRESHOLD = 3;
+// スクロール検出の閾値（ピクセル）
+const SCROLL_THRESHOLD = 5;
+// 長押し開始までの遅延（スクロール意図を判定するため）
+const LONG_PRESS_DELAY = 100;
 
 export default function CardItem({ card, onToggle, onFavoriteToggle, isUpdating, showGrayscale = true }: CardItemProps) {
   const [showModal, setShowModal] = useState(false);
@@ -25,18 +27,18 @@ export default function CardItem({ card, onToggle, onFavoriteToggle, isUpdating,
 
   const pressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const delayTimerRef = useRef<NodeJS.Timeout | null>(null);
   const pressStartTimeRef = useRef<number>(0);
   const startPosRef = useRef<{ x: number; y: number } | null>(null);
-  const longPressCompletedRef = useRef<boolean>(false);
+  const isScrollingRef = useRef<boolean>(false);
 
   const imageSrc = card.image_path || '/placeholder-card.png';
   const shouldGrayscale = showGrayscale && !card.owned;
 
-  // 長押し開始
-  const startLongPress = useCallback((x: number, y: number) => {
-    if (isUpdating) return;
+  // 実際に長押しを開始する（遅延後に呼ばれる）
+  const actuallyStartLongPress = useCallback(() => {
+    if (isScrollingRef.current) return;
 
-    startPosRef.current = { x, y };
     setIsLongPressing(true);
     setPressProgress(0);
     pressStartTimeRef.current = Date.now();
@@ -53,14 +55,34 @@ export default function CardItem({ card, onToggle, onFavoriteToggle, isUpdating,
       onToggle(card.id);
       cancelLongPress();
     }, LONG_PRESS_DURATION);
-  }, [isUpdating, card.id, onToggle]);
+  }, [card.id, onToggle]);
+
+  // 長押し開始（遅延付き）
+  const startLongPress = useCallback((x: number, y: number) => {
+    if (isUpdating) return;
+
+    startPosRef.current = { x, y };
+    isScrollingRef.current = false;
+
+    // 少し遅延してから長押し開始（スクロール意図を判定するため）
+    delayTimerRef.current = setTimeout(() => {
+      if (!isScrollingRef.current) {
+        actuallyStartLongPress();
+      }
+    }, LONG_PRESS_DELAY);
+  }, [isUpdating, actuallyStartLongPress]);
 
   // 長押しキャンセル
   const cancelLongPress = useCallback(() => {
     setIsLongPressing(false);
     setPressProgress(0);
     startPosRef.current = null;
+    isScrollingRef.current = false;
 
+    if (delayTimerRef.current) {
+      clearTimeout(delayTimerRef.current);
+      delayTimerRef.current = null;
+    }
     if (pressTimerRef.current) {
       clearTimeout(pressTimerRef.current);
       pressTimerRef.current = null;
@@ -74,6 +96,7 @@ export default function CardItem({ card, onToggle, onFavoriteToggle, isUpdating,
   // クリーンアップ
   useEffect(() => {
     return () => {
+      if (delayTimerRef.current) clearTimeout(delayTimerRef.current);
       if (pressTimerRef.current) clearTimeout(pressTimerRef.current);
       if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
     };
@@ -108,6 +131,7 @@ export default function CardItem({ card, onToggle, onFavoriteToggle, isUpdating,
       const dx = Math.abs(touch.clientX - startPosRef.current.x);
       const dy = Math.abs(touch.clientY - startPosRef.current.y);
       if (dx > SCROLL_THRESHOLD || dy > SCROLL_THRESHOLD) {
+        isScrollingRef.current = true;
         cancelLongPress();
       }
     }
