@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import CardImageModal from './CardImageModal';
 import type { CardWithOwnership } from '@/types';
@@ -12,56 +12,22 @@ interface CardItemProps {
   showGrayscale?: boolean;
 }
 
-const LONG_PRESS_DURATION = 500; // ミリ秒
-
 export default function CardItem({ card, onToggle, isUpdating, showGrayscale = true }: CardItemProps) {
   const [showModal, setShowModal] = useState(false);
-  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
-  const isLongPress = useRef(false);
 
   const imageSrc = card.image_path || '/placeholder-card.png';
   const shouldGrayscale = showGrayscale && !card.owned;
 
-  const handlePointerDown = useCallback(() => {
-    isLongPress.current = false;
-    longPressTimer.current = setTimeout(() => {
-      isLongPress.current = true;
-      setShowModal(true);
-    }, LONG_PRESS_DURATION);
-  }, []);
-
-  const handlePointerUp = useCallback(() => {
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
-      longPressTimer.current = null;
-    }
-  }, []);
-
-  const handlePointerLeave = useCallback(() => {
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
-      longPressTimer.current = null;
-    }
-  }, []);
-
-  const handleClick = useCallback(() => {
-    // 長押し後のクリックは無視
-    if (isLongPress.current) {
-      isLongPress.current = false;
-      return;
-    }
-    onToggle(card.id);
-  }, [card.id, onToggle]);
+  const handleSearchClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowModal(true);
+  };
 
   return (
     <>
       <button
         type="button"
-        onClick={handleClick}
-        onPointerDown={handlePointerDown}
-        onPointerUp={handlePointerUp}
-        onPointerLeave={handlePointerLeave}
-        onContextMenu={(e) => e.preventDefault()}
+        onClick={() => onToggle(card.id)}
         disabled={isUpdating}
         className={`relative aspect-[63/88] w-full overflow-hidden rounded-lg transition-all duration-200 ${
           isUpdating ? 'opacity-50 cursor-wait' : 'hover:scale-105 active:scale-95'
@@ -104,6 +70,27 @@ export default function CardItem({ card, onToggle, isUpdating, showGrayscale = t
           </div>
         )}
 
+        {/* 虫眼鏡アイコン（左上） */}
+        <div
+          onClick={handleSearchClick}
+          className="absolute top-1 left-1 p-1 rounded bg-black/50 hover:bg-black/70 transition-colors cursor-pointer"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={2}
+            stroke="white"
+            className="w-4 h-4"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+            />
+          </svg>
+        </div>
+
         {/* カード番号バッジ */}
         <div className="absolute bottom-1 right-1 rounded bg-black/70 px-1.5 py-0.5 text-xs text-white">
           {card.card_number}
@@ -111,7 +98,7 @@ export default function CardItem({ card, onToggle, isUpdating, showGrayscale = t
 
         {/* 価格バッジ */}
         {card.price !== undefined && (
-          <div className="absolute top-1 left-1 rounded bg-orange-500/90 px-1.5 py-0.5 text-xs text-white font-medium">
+          <div className="absolute top-1 right-1 rounded bg-orange-500/90 px-1.5 py-0.5 text-xs text-white font-medium">
             ¥{card.price.toLocaleString()}
           </div>
         )}
