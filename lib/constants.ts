@@ -72,3 +72,55 @@ export const SERIES_ORDER: Record<string, number> = {
 export function getSeriesOrder(seriesCode: string): number {
   return SERIES_ORDER[seriesCode] ?? 999;
 }
+
+// シリーズごとのノーマルカード総枚数
+// カードラッシュの検索形式: 【AR】{079/078} の「/078」部分に使用
+export const SERIES_TOTAL_CARDS: Record<string, number | string> = {
+  // スカーレットex / バイオレットex
+  'sv1s': 78,
+  'sv1v': 78,
+  'sv1a': 73,
+
+  // クレイバースト / スノーハザード / ポケモンカード151
+  'sv2d': 71,
+  'sv2p': 71,
+  'sv2a': 165,
+
+  // 黒炎の支配者 / レイジングサーフ
+  'sv3': 62,
+  'sv3a': 62,
+
+  // 古代の咆哮 / 未来の一閃 / シャイニートレジャーex
+  'sv4k': 66,
+  'sv4m': 66,
+  'sv4a': 190,
+
+  // ワイルドフォース / サイバージャッジ / クリムゾンヘイズ
+  'sv5k': 71,
+  'sv5m': 71,
+  'sv5a': 66,
+
+  // 変幻の仮面 / ナイトワンダラー
+  'sv6': 64,
+  'sv6a': 64,
+
+  // ステラミラクル / 超電ブレイカー
+  'sv7': 64,
+  'sv7a': 70,
+
+  // パラダイムトリガー / テラスタルフェス
+  'sv8': 106,
+  'sv8a': 90,
+
+  // プロモカード（SV-Pを使用）
+  'promo': 'SV-P',
+};
+
+// シリーズコードに対応する総枚数を取得
+export function getSeriesTotalCards(seriesCode: string): string {
+  const total = SERIES_TOTAL_CARDS[seriesCode.toLowerCase()];
+  if (total === undefined) {
+    return '???';  // 未知のシリーズ
+  }
+  return String(total).padStart(3, '0');
+}

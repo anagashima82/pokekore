@@ -16,6 +16,32 @@ const CARDRUSH_BASE_URL = 'https://www.cardrush-pokemon.jp';
 // スクレイピング間の遅延（ミリ秒）
 const SCRAPE_DELAY_MS = 500;
 
+// シリーズごとのノーマルカード総枚数
+// カードラッシュの検索形式: 【AR】{079/078} の「/078」部分に使用
+const SERIES_TOTAL_CARDS: Record<string, number | string> = {
+  'sv1s': 78,
+  'sv1v': 78,
+  'sv1a': 73,
+  'sv2d': 71,
+  'sv2p': 71,
+  'sv2a': 165,
+  'sv3': 62,
+  'sv3a': 62,
+  'sv4k': 66,
+  'sv4m': 66,
+  'sv4a': 190,
+  'sv5k': 71,
+  'sv5m': 71,
+  'sv5a': 66,
+  'sv6': 64,
+  'sv6a': 64,
+  'sv7': 64,
+  'sv7a': 70,
+  'sv8': 106,
+  'sv8a': 90,
+  'promo': 'SV-P',
+};
+
 // Supabase設定
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
@@ -53,15 +79,30 @@ async function scrapeCardRushPrice(
     const paddedCardNumber = cardNumber.padStart(3, '0');
     // シリーズコードを大文字に変換（例: sv1s → SV1S）
     const upperSeriesCode = seriesCode.toUpperCase();
+    const lowerSeriesCode = seriesCode.toLowerCase();
 
-    // 検索クエリ: 【AR】{079} [SV1S] 形式
-    // promoカードの場合はシリーズコードを付けない（カードラッシュの形式に合わせる）
+    // シリーズの総枚数を取得
+    const totalCards = SERIES_TOTAL_CARDS[lowerSeriesCode];
+
+    // 検索クエリを作成
+    // 形式: 【AR】{079/078} [SV1S] または 【AR】{232/SV-P}（プロモ）
     let searchQuery: string;
-    if (upperSeriesCode === 'PROMO') {
-      searchQuery = rarity ? `【${rarity}】{${paddedCardNumber}}` : `{${paddedCardNumber}}`;
+    if (upperSeriesCode === 'PROMO' || totalCards === 'SV-P') {
+      // プロモカード: 【AR】{232/SV-P}
+      searchQuery = rarity ? `【${rarity}】{${paddedCardNumber}/SV-P}` : `{${paddedCardNumber}/SV-P}`;
+    } else if (totalCards !== undefined && rarity) {
+      // 通常シリーズ: 【AR】{079/078} [SV1S]
+      const paddedTotal = String(totalCards).padStart(3, '0');
+      searchQuery = `【${rarity}】{${paddedCardNumber}/${paddedTotal}} [${upperSeriesCode}]`;
+    } else if (totalCards !== undefined) {
+      // レアリティなし: {079/078} [SV1S]
+      const paddedTotal = String(totalCards).padStart(3, '0');
+      searchQuery = `{${paddedCardNumber}/${paddedTotal}} [${upperSeriesCode}]`;
     } else if (rarity) {
+      // 未知のシリーズ（レアリティあり）: 旧形式
       searchQuery = `【${rarity}】{${paddedCardNumber}} [${upperSeriesCode}]`;
     } else {
+      // 未知のシリーズ（レアリティなし）: 旧形式
       searchQuery = `{${paddedCardNumber}} [${upperSeriesCode}]`;
     }
 

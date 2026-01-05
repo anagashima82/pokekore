@@ -5,6 +5,8 @@
  * 過度なリクエストは避け、適切な間隔を空けてください。
  */
 
+import { SERIES_TOTAL_CARDS } from './constants';
+
 interface ScrapedPrice {
   cardNumber: string;
   seriesCode: string;
@@ -24,7 +26,8 @@ const CARDRUSH_BASE_URL = 'https://www.cardrush-pokemon.jp';
 
 /**
  * カードラッシュで検索して価格を取得（複数状態対応）
- * 検索クエリ: "【レアリティ】{カード番号} [シリーズコード]" 形式
+ * 検索クエリ: "【レアリティ】{カード番号/総枚数} [シリーズコード]" 形式
+ * 例: 【AR】{079/078} [SV1S] または 【AR】{232/SV-P}（プロモ）
  */
 export async function scrapeCardRushPrice(
   seriesCode: string,
@@ -36,16 +39,30 @@ export async function scrapeCardRushPrice(
     const paddedCardNumber = cardNumber.padStart(3, '0');
     // シリーズコードを大文字に変換（例: sv1s → SV1S）
     const upperSeriesCode = seriesCode.toUpperCase();
+    const lowerSeriesCode = seriesCode.toLowerCase();
+
+    // シリーズの総枚数を取得
+    const totalCards = SERIES_TOTAL_CARDS[lowerSeriesCode];
 
     // 検索クエリを作成
-    // 形式: 【AR】{079} [SV1S] のような形式で検索
-    // promoカードの場合はシリーズコードを付けない（カードラッシュの形式に合わせる）
+    // 形式: 【AR】{079/078} [SV1S] または 【AR】{232/SV-P}（プロモ）
     let searchQuery: string;
-    if (upperSeriesCode === 'PROMO') {
-      searchQuery = rarity ? `【${rarity}】{${paddedCardNumber}}` : `{${paddedCardNumber}}`;
+    if (upperSeriesCode === 'PROMO' || totalCards === 'SV-P') {
+      // プロモカード: 【AR】{232/SV-P}
+      searchQuery = rarity ? `【${rarity}】{${paddedCardNumber}/SV-P}` : `{${paddedCardNumber}/SV-P}`;
+    } else if (totalCards !== undefined && rarity) {
+      // 通常シリーズ: 【AR】{079/078} [SV1S]
+      const paddedTotal = String(totalCards).padStart(3, '0');
+      searchQuery = `【${rarity}】{${paddedCardNumber}/${paddedTotal}} [${upperSeriesCode}]`;
+    } else if (totalCards !== undefined) {
+      // レアリティなし: {079/078} [SV1S]
+      const paddedTotal = String(totalCards).padStart(3, '0');
+      searchQuery = `{${paddedCardNumber}/${paddedTotal}} [${upperSeriesCode}]`;
     } else if (rarity) {
+      // 未知のシリーズ（レアリティあり）: 旧形式
       searchQuery = `【${rarity}】{${paddedCardNumber}} [${upperSeriesCode}]`;
     } else {
+      // 未知のシリーズ（レアリティなし）: 旧形式
       searchQuery = `{${paddedCardNumber}} [${upperSeriesCode}]`;
     }
     const searchUrl = `${CARDRUSH_BASE_URL}/product-list?keyword=${encodeURIComponent(searchQuery)}`;
