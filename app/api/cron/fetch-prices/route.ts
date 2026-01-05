@@ -11,6 +11,30 @@ const SCRAPE_DELAY_MS = 500;
 // モードを環境変数で切り替え（'scrape' | 'mock'）
 const PRICE_MODE = process.env.PRICE_MODE || 'scrape';
 
+// Slack Webhook URL
+const SLACK_WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL;
+
+// Slack通知を送信
+async function sendSlackNotification(message: string, isError = false) {
+  if (!SLACK_WEBHOOK_URL) {
+    console.log('Slack webhook URL not configured, skipping notification');
+    return;
+  }
+
+  try {
+    const emoji = isError ? ':x:' : ':white_check_mark:';
+    await fetch(SLACK_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: `${emoji} *ポケコレ価格収集*\n${message}`,
+      }),
+    });
+  } catch (error) {
+    console.error('Failed to send Slack notification:', error);
+  }
+}
+
 export async function GET(request: NextRequest) {
   // Cron認証（Vercel Cronは CRON_SECRET ヘッダーを送信）
   const authHeader = request.headers.get('authorization');
@@ -92,6 +116,9 @@ export async function GET(request: NextRequest) {
       insertedCount += batch.length;
     }
 
+    const resultMessage = `${insertedCount}件の価格を取得しました（成功: ${scrapedCount}件、失敗: ${failedCount}件）\nモード: ${PRICE_MODE}`;
+    await sendSlackNotification(resultMessage);
+
     return NextResponse.json({
       success: true,
       mode: PRICE_MODE,
@@ -100,6 +127,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Cron job error:', error);
+    await sendSlackNotification(`エラーが発生しました: ${error instanceof Error ? error.message : 'Unknown error'}`, true);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
