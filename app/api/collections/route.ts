@@ -64,7 +64,15 @@ export async function GET(request: NextRequest) {
   }
 
   // レスポンス形式を整形
-  const collections = data?.map((item) => ({
+  type CollectionWithCard = {
+    id: string;
+    user_id: string;
+    card_id: string;
+    owned: boolean;
+    updated_at: string;
+    cards: unknown;
+  };
+  const collections = (data as CollectionWithCard[] | null)?.map((item) => ({
     id: item.id,
     user_id: item.user_id,
     card: item.card_id,
