@@ -7,6 +7,7 @@ interface SeriesSectionProps {
   seriesCode: string;
   cards: CardWithOwnership[];
   onToggle: (cardId: string) => void;
+  onFavoriteToggle?: (cardId: string) => void;
   updatingCardIds: Set<string>;
   showGrayscale?: boolean;
 }
@@ -15,6 +16,7 @@ export default function SeriesSection({
   seriesCode,
   cards,
   onToggle,
+  onFavoriteToggle,
   updatingCardIds,
   showGrayscale = true,
 }: SeriesSectionProps) {
@@ -48,6 +50,7 @@ export default function SeriesSection({
             key={card.id}
             card={card}
             onToggle={onToggle}
+            onFavoriteToggle={onFavoriteToggle}
             isUpdating={updatingCardIds.has(card.id)}
             showGrayscale={showGrayscale}
           />

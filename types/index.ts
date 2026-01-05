@@ -17,6 +17,7 @@ export interface UserCollection {
   card: string;
   card_detail: Card;
   owned: boolean;
+  is_favorite: boolean;
   updated_at: string;
 }
 
@@ -62,13 +63,14 @@ export interface PaginatedResponse<T> {
 export interface FilterState {
   series: string;
   rarity: string;
-  owned: 'all' | 'owned' | 'not_owned';
+  owned: 'all' | 'owned' | 'not_owned' | 'favorite';
   showGrayscale: boolean;
 }
 
 // カードと所持状態を統合した型
 export interface CardWithOwnership extends Card {
   owned: boolean;
+  is_favorite: boolean;
   collection_id?: string;
   price?: number;
   price_fetched_at?: string;

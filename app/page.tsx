@@ -5,7 +5,7 @@ import Header from '@/components/Header';
 import FilterBar from '@/components/FilterBar';
 import CardGrid from '@/components/CardGrid';
 import { usePreloadedData } from '@/components/AppShell';
-import { toggleCollection, getCollectionStats } from '@/lib/api';
+import { toggleCollection, toggleFavorite, getCollectionStats } from '@/lib/api';
 import type {
   UserCollection,
   CollectionStats,
@@ -53,6 +53,7 @@ export default function Home() {
     return {
       ...card,
       owned: collection?.owned ?? false,
+      is_favorite: collection?.is_favorite ?? false,
       collection_id: collection?.id,
       price: price?.price,
       price_fetched_at: price?.fetched_at,
@@ -83,6 +84,7 @@ export default function Home() {
           card: cardId,
           card_detail: cards.find((c) => c.id === cardId)!,
           owned: true,
+          is_favorite: false,
           updated_at: new Date().toISOString(),
         });
       }
@@ -130,6 +132,69 @@ export default function Home() {
       // 統計も元に戻す
       if (stats) {
         setStats(stats);
+      }
+    } finally {
+      setUpdatingCardIds((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(cardId);
+        return newSet;
+      });
+    }
+  };
+
+  // お気に入りトグル（楽観的更新）
+  const handleFavoriteToggle = async (cardId: string) => {
+    // 既に更新中なら無視
+    if (updatingCardIds.has(cardId)) return;
+
+    // 楽観的更新
+    const currentCollection = collections.get(cardId);
+    const newFavorite = !currentCollection?.is_favorite;
+
+    setUpdatingCardIds((prev) => new Set([...prev, cardId]));
+
+    // 楽観的にUIを更新
+    setCollections((prev) => {
+      const newMap = new Map(prev);
+      if (currentCollection) {
+        newMap.set(cardId, { ...currentCollection, is_favorite: newFavorite });
+      } else {
+        // 新規コレクション（仮のデータ）- お気に入りのみ
+        newMap.set(cardId, {
+          id: 'temp',
+          user_id: '',
+          card: cardId,
+          card_detail: cards.find((c) => c.id === cardId)!,
+          owned: false,
+          is_favorite: true,
+          updated_at: new Date().toISOString(),
+        });
+      }
+      return newMap;
+    });
+
+    try {
+      const result = await toggleFavorite(cardId);
+      setCollections((prev) => {
+        const newMap = new Map(prev);
+        newMap.set(cardId, result);
+        return newMap;
+      });
+    } catch (err) {
+      console.error('Failed to toggle favorite:', err);
+      // 失敗した場合は元に戻す
+      if (currentCollection) {
+        setCollections((prev) => {
+          const newMap = new Map(prev);
+          newMap.set(cardId, currentCollection);
+          return newMap;
+        });
+      } else {
+        setCollections((prev) => {
+          const newMap = new Map(prev);
+          newMap.delete(cardId);
+          return newMap;
+        });
       }
     } finally {
       setUpdatingCardIds((prev) => {
@@ -204,6 +269,7 @@ export default function Home() {
           cards={cardsWithOwnership}
           filter={filter}
           onToggle={handleToggle}
+          onFavoriteToggle={handleFavoriteToggle}
           updatingCardIds={updatingCardIds}
         />
       </main>

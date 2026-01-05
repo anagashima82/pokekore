@@ -9,6 +9,7 @@ interface CardGridProps {
   cards: CardWithOwnership[];
   filter: FilterState;
   onToggle: (cardId: string) => void;
+  onFavoriteToggle?: (cardId: string) => void;
   updatingCardIds: Set<string>;
 }
 
@@ -16,6 +17,7 @@ export default function CardGrid({
   cards,
   filter,
   onToggle,
+  onFavoriteToggle,
   updatingCardIds,
 }: CardGridProps) {
   // フィルタリングとグループ化
@@ -35,6 +37,8 @@ export default function CardGrid({
       filtered = filtered.filter((c) => c.owned);
     } else if (filter.owned === 'not_owned') {
       filtered = filtered.filter((c) => !c.owned);
+    } else if (filter.owned === 'favorite') {
+      filtered = filtered.filter((c) => c.is_favorite);
     }
 
     // シリーズごとにグループ化
@@ -91,6 +95,7 @@ export default function CardGrid({
           seriesCode={seriesCode}
           cards={seriesCards}
           onToggle={onToggle}
+          onFavoriteToggle={onFavoriteToggle}
           updatingCardIds={updatingCardIds}
           showGrayscale={filter.showGrayscale}
         />

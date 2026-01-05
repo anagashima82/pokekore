@@ -77,6 +77,12 @@ export async function toggleCollection(cardId: string): Promise<UserCollection> 
   });
 }
 
+export async function toggleFavorite(cardId: string): Promise<UserCollection> {
+  return fetchApi<UserCollection>(`/collections/${cardId}`, {
+    method: 'PATCH',
+  });
+}
+
 export async function getCollectionStats(): Promise<CollectionStats> {
   return fetchApi<CollectionStats>('/collections/stats');
 }
