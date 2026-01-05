@@ -94,3 +94,10 @@ export async function updateSetting(
     body: JSON.stringify({ is_collecting: isCollecting }),
   });
 }
+
+// 認証関連API
+export async function initializeUser(): Promise<void> {
+  await fetchApi<{ message: string }>('/auth/init', {
+    method: 'POST',
+  });
+}

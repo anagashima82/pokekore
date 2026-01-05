@@ -11,6 +11,7 @@ import {
   getRarities,
   getCollectionStats,
   toggleCollection,
+  initializeUser,
 } from '@/lib/api';
 import type {
   Card,
@@ -43,6 +44,9 @@ export default function Home() {
     try {
       setIsLoading(true);
       setError(null);
+
+      // 新規ユーザーの場合は初期化
+      await initializeUser();
 
       const [cardsData, collectionsData, seriesData, raritiesData, statsData] =
         await Promise.all([

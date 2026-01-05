@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { DEFAULT_USER_ID } from '@/lib/constants';
+import { getAuthUser, unauthorizedResponse } from '@/lib/auth';
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ cardId: string }> }
 ) {
-  const supabase = createClient();
+  const { user, error: authError } = await getAuthUser();
+  if (authError || !user) {
+    return unauthorizedResponse();
+  }
+
+  const supabase = await createClient();
   const { cardId } = await params;
 
   // カードの存在確認
@@ -24,7 +29,7 @@ export async function PUT(
   const { data: existing } = await supabase
     .from('user_collections')
     .select('*')
-    .eq('user_id', DEFAULT_USER_ID)
+    .eq('user_id', user.id)
     .eq('card_id', cardId)
     .single();
 
@@ -57,7 +62,7 @@ export async function PUT(
     const { data, error } = await supabase
       .from('user_collections')
       .insert({
-        user_id: DEFAULT_USER_ID,
+        user_id: user.id,
         card_id: cardId,
         owned: true,
       } as never)

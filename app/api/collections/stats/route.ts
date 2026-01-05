@@ -1,15 +1,20 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { DEFAULT_USER_ID } from '@/lib/constants';
+import { getAuthUser, unauthorizedResponse } from '@/lib/auth';
 
 export async function GET() {
-  const supabase = createClient();
+  const { user, error: authError } = await getAuthUser();
+  if (authError || !user) {
+    return unauthorizedResponse();
+  }
+
+  const supabase = await createClient();
 
   // 収集対象のレアリティを取得
   const { data: settings } = await supabase
     .from('collection_settings')
     .select('rarity')
-    .eq('user_id', DEFAULT_USER_ID)
+    .eq('user_id', user.id)
     .eq('is_collecting', true);
 
   const collectingRarities = (settings as { rarity: string }[] | null)?.map((s) => s.rarity) || [];
@@ -33,7 +38,7 @@ export async function GET() {
   const { count: ownedCards } = await supabase
     .from('user_collections')
     .select('*, cards!inner(*)', { count: 'exact', head: true })
-    .eq('user_id', DEFAULT_USER_ID)
+    .eq('user_id', user.id)
     .eq('owned', true)
     .in('cards.rarity', collectingRarities);
 
@@ -56,7 +61,7 @@ export async function GET() {
     const { count: seriesOwned } = await supabase
       .from('user_collections')
       .select('*, cards!inner(*)', { count: 'exact', head: true })
-      .eq('user_id', DEFAULT_USER_ID)
+      .eq('user_id', user.id)
       .eq('owned', true)
       .eq('cards.series_code', seriesCode)
       .in('cards.rarity', collectingRarities);

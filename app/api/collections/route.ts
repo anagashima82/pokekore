@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { DEFAULT_USER_ID } from '@/lib/constants';
+import { getAuthUser, unauthorizedResponse } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
-  const supabase = createClient();
+  const { user, error: authError } = await getAuthUser();
+  if (authError || !user) {
+    return unauthorizedResponse();
+  }
+
+  const supabase = await createClient();
   const { searchParams } = new URL(request.url);
 
   const owned = searchParams.get('owned');
@@ -14,7 +19,7 @@ export async function GET(request: NextRequest) {
   const { data: settings } = await supabase
     .from('collection_settings')
     .select('rarity')
-    .eq('user_id', DEFAULT_USER_ID)
+    .eq('user_id', user.id)
     .eq('is_collecting', true);
 
   const collectingRarities = (settings as { rarity: string }[] | null)?.map((s) => s.rarity) || [];
@@ -38,7 +43,7 @@ export async function GET(request: NextRequest) {
         created_at
       )
     `)
-    .eq('user_id', DEFAULT_USER_ID);
+    .eq('user_id', user.id);
 
   // 収集対象レアリティでフィルタ
   if (collectingRarities.length > 0) {

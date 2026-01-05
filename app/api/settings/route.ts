@@ -1,14 +1,20 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { DEFAULT_USER_ID, RARITY_CHOICES } from '@/lib/constants';
+import { RARITY_CHOICES } from '@/lib/constants';
+import { getAuthUser, unauthorizedResponse } from '@/lib/auth';
 
 export async function GET() {
-  const supabase = createClient();
+  const { user, error: authError } = await getAuthUser();
+  if (authError || !user) {
+    return unauthorizedResponse();
+  }
+
+  const supabase = await createClient();
 
   const { data, error } = await supabase
     .from('collection_settings')
     .select('*')
-    .eq('user_id', DEFAULT_USER_ID)
+    .eq('user_id', user.id)
     .order('rarity');
 
   if (error) {

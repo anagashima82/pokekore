@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { DEFAULT_USER_ID, RARITY_CHOICES } from '@/lib/constants';
+import { RARITY_CHOICES } from '@/lib/constants';
+import { getAuthUser, unauthorizedResponse } from '@/lib/auth';
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ rarity: string }> }
 ) {
-  const supabase = createClient();
+  const { user, error: authError } = await getAuthUser();
+  if (authError || !user) {
+    return unauthorizedResponse();
+  }
+
+  const supabase = await createClient();
   const { rarity } = await params;
 
   // リクエストボディを取得
@@ -17,7 +23,7 @@ export async function PUT(
   const { data: existing } = await supabase
     .from('collection_settings')
     .select('*')
-    .eq('user_id', DEFAULT_USER_ID)
+    .eq('user_id', user.id)
     .eq('rarity', rarity)
     .single();
 
@@ -43,7 +49,7 @@ export async function PUT(
     const { data, error } = await supabase
       .from('collection_settings')
       .insert({
-        user_id: DEFAULT_USER_ID,
+        user_id: user.id,
         rarity,
         is_collecting: isCollecting,
       } as never)
