@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
-import { getMockPrice } from '@/lib/price-scraper';
+import { scrapeCardRushPrice, getMockPrice } from '@/lib/price-scraper';
 
 // Vercel Cronから呼び出されるエンドポイント
 // vercel.jsonで設定: { "path": "/api/cron/fetch-prices", "schedule": "0 6 * * *" }
+
+// スクレイピング間の遅延（ミリ秒）- サーバー負荷軽減のため
+const SCRAPE_DELAY_MS = 500;
+
+// モードを環境変数で切り替え（'scrape' | 'mock'）
+const PRICE_MODE = process.env.PRICE_MODE || 'scrape';
 
 export async function GET(request: NextRequest) {
   // Cron認証（Vercel Cronは CRON_SECRET ヘッダーを送信）
@@ -30,13 +36,43 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: 'No cards found' });
     }
 
-    // 価格データを収集（現在はモックデータ）
-    const priceRecords = (cards as { id: string; name: string; series_code: string; card_number: string }[]).map((card) => ({
-      card_id: card.id,
-      price: getMockPrice(card.id),
-      source: 'mock', // 本番では 'cardrush' に変更
-      fetched_at: new Date().toISOString(),
-    }));
+    const typedCards = cards as { id: string; name: string; series_code: string; card_number: string }[];
+    const priceRecords: { card_id: string; price: number; source: string; fetched_at: string }[] = [];
+    let scrapedCount = 0;
+    let failedCount = 0;
+
+    if (PRICE_MODE === 'scrape') {
+      // 実際のスクレイピング
+      for (const card of typedCards) {
+        const result = await scrapeCardRushPrice(card.series_code, card.card_number);
+
+        if (result && result.price !== null) {
+          priceRecords.push({
+            card_id: card.id,
+            price: result.price,
+            source: 'cardrush',
+            fetched_at: new Date().toISOString(),
+          });
+          scrapedCount++;
+        } else {
+          failedCount++;
+        }
+
+        // レート制限：リクエスト間に遅延を入れる
+        await new Promise((resolve) => setTimeout(resolve, SCRAPE_DELAY_MS));
+      }
+    } else {
+      // モックモード
+      for (const card of typedCards) {
+        priceRecords.push({
+          card_id: card.id,
+          price: getMockPrice(card.id),
+          source: 'mock',
+          fetched_at: new Date().toISOString(),
+        });
+      }
+      scrapedCount = typedCards.length;
+    }
 
     // バッチインサート（500件ずつ）
     const batchSize = 500;
@@ -58,7 +94,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `Fetched prices for ${insertedCount} cards`,
+      mode: PRICE_MODE,
+      message: `Fetched prices for ${insertedCount} cards (scraped: ${scrapedCount}, failed: ${failedCount})`,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {

@@ -16,21 +16,24 @@ interface ScrapedPrice {
 const CARDRUSH_BASE_URL = 'https://www.cardrush-pokemon.jp';
 
 /**
- * カード名からカードラッシュで検索して価格を取得
+ * カードラッシュで検索して価格を取得
+ * 検索クエリ: "シリーズコード カード番号" (例: "SV7a 001")
  */
 export async function scrapeCardRushPrice(
-  cardName: string,
   seriesCode: string,
   cardNumber: string
 ): Promise<ScrapedPrice | null> {
   try {
-    // 検索クエリを作成（カード名 + シリーズコード + カード番号）
-    const searchQuery = `${cardName} ${seriesCode} ${cardNumber}`;
+    // 検索クエリを作成（シリーズコード + カード番号のみ）
+    // 例: "SV7a 001" で検索すると {001/064} [SV7a] のカードがヒット
+    const searchQuery = `${seriesCode} ${cardNumber}`;
     const searchUrl = `${CARDRUSH_BASE_URL}/product-list?keyword=${encodeURIComponent(searchQuery)}`;
 
     const response = await fetch(searchUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; PokekoreBot/1.0)',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'ja,en;q=0.9',
       },
     });
 
@@ -41,12 +44,30 @@ export async function scrapeCardRushPrice(
 
     const html = await response.text();
 
-    // 価格を抽出（簡易的な正規表現パターン）
-    // 実際のHTMLストラクチャに合わせて調整が必要
-    const priceMatch = html.match(/¥([0-9,]+)/);
+    // カード番号でマッチするか確認（例: {001/064} [SV7a]）
+    // 番号の先頭ゼロを除去してマッチング（001 -> 1）
+    const numWithoutLeadingZeros = cardNumber.replace(/^0+/, '');
+    const cardPattern = new RegExp(
+      `\\{0*${numWithoutLeadingZeros}/\\d+\\}\\s*\\[${seriesCode}\\]`,
+      'i'
+    );
+
+    if (!cardPattern.test(html)) {
+      // カードが見つからない場合
+      return {
+        cardNumber,
+        seriesCode,
+        price: null,
+        source: 'cardrush',
+      };
+    }
+
+    // 価格を抽出（"○○円(税込)" 形式）
+    // 最初にマッチした価格を取得（通常は最安値が先に表示される）
+    const priceMatch = html.match(/(\d{1,6})円\(税込\)/);
 
     if (priceMatch) {
-      const price = parseInt(priceMatch[1].replace(/,/g, ''), 10);
+      const price = parseInt(priceMatch[1], 10);
       return {
         cardNumber,
         seriesCode,
@@ -71,14 +92,13 @@ export async function scrapeCardRushPrice(
  * 複数カードの価格を取得（レート制限対応）
  */
 export async function scrapeMultipleCards(
-  cards: { id: string; name: string; seriesCode: string; cardNumber: string }[],
+  cards: { id: string; seriesCode: string; cardNumber: string }[],
   delayMs: number = 1000
 ): Promise<Map<string, number | null>> {
   const results = new Map<string, number | null>();
 
   for (const card of cards) {
     const result = await scrapeCardRushPrice(
-      card.name,
       card.seriesCode,
       card.cardNumber
     );
@@ -102,7 +122,8 @@ export function getMockPrice(cardId: string): number {
   // カードIDを基にした擬似的な価格生成
   const hash = cardId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
 
-  // 100円〜50000円の範囲でランダム風の価格を生成
-  const basePrice = (hash % 500) * 100;
-  return Math.max(100, basePrice);
+  // 50円〜3000円の範囲で現実的な価格を生成
+  // 一般的なカードは50〜500円、レアは500〜1500円、高レアは1500〜3000円
+  const basePrice = (hash % 60) * 50 + 50;
+  return basePrice;
 }
