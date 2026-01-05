@@ -8,6 +8,7 @@ interface SeriesSectionProps {
   cards: CardWithOwnership[];
   onToggle: (cardId: string) => void;
   updatingCardIds: Set<string>;
+  showGrayscale?: boolean;
 }
 
 export default function SeriesSection({
@@ -15,6 +16,7 @@ export default function SeriesSection({
   cards,
   onToggle,
   updatingCardIds,
+  showGrayscale = true,
 }: SeriesSectionProps) {
   const ownedCount = cards.filter((c) => c.owned).length;
   const totalCount = cards.length;
@@ -47,6 +49,7 @@ export default function SeriesSection({
             card={card}
             onToggle={onToggle}
             isUpdating={updatingCardIds.has(card.id)}
+            showGrayscale={showGrayscale}
           />
         ))}
       </div>

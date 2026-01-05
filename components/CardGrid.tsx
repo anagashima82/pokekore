@@ -91,6 +91,7 @@ export default function CardGrid({
           cards={seriesCards}
           onToggle={onToggle}
           updatingCardIds={updatingCardIds}
+          showGrayscale={filter.showGrayscale}
         />
       ))}
     </div>

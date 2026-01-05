@@ -63,6 +63,7 @@ export interface FilterState {
   series: string;
   rarity: string;
   owned: 'all' | 'owned' | 'not_owned';
+  showGrayscale: boolean;
 }
 
 // カードと所持状態を統合した型

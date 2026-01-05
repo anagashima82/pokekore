@@ -7,10 +7,12 @@ interface CardItemProps {
   card: CardWithOwnership;
   onToggle: (cardId: string) => void;
   isUpdating?: boolean;
+  showGrayscale?: boolean;
 }
 
-export default function CardItem({ card, onToggle, isUpdating }: CardItemProps) {
+export default function CardItem({ card, onToggle, isUpdating, showGrayscale = true }: CardItemProps) {
   const imageSrc = card.image_path || '/placeholder-card.png';
+  const shouldGrayscale = showGrayscale && !card.owned;
 
   return (
     <button
@@ -18,7 +20,7 @@ export default function CardItem({ card, onToggle, isUpdating }: CardItemProps) 
       disabled={isUpdating}
       className={`relative aspect-[63/88] w-full overflow-hidden rounded-lg transition-all duration-200 ${
         isUpdating ? 'opacity-50 cursor-wait' : 'hover:scale-105 active:scale-95'
-      } ${!card.owned ? 'grayscale opacity-50' : ''}`}
+      } ${shouldGrayscale ? 'grayscale opacity-50' : ''}`}
     >
       {/* カード画像 */}
       <Image
@@ -32,14 +34,14 @@ export default function CardItem({ card, onToggle, isUpdating }: CardItemProps) 
 
       {/* 未所持アイコン */}
       {!card.owned && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+        <div className={`absolute inset-0 flex items-center justify-center ${shouldGrayscale ? 'bg-black/30' : ''}`}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
             strokeWidth={2}
-            stroke="white"
-            className="h-8 w-8"
+            stroke={shouldGrayscale ? 'white' : 'rgba(255,255,255,0.8)'}
+            className="h-8 w-8 drop-shadow-lg"
           >
             <path
               strokeLinecap="round"

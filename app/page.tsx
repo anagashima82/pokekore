@@ -32,6 +32,7 @@ export default function Home() {
     series: '',
     rarity: '',
     owned: 'all',
+    showGrayscale: true,
   });
   const [updatingCardIds, setUpdatingCardIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
