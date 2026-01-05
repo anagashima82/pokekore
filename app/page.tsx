@@ -1,34 +1,34 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState } from 'react';
 import Header from '@/components/Header';
 import FilterBar from '@/components/FilterBar';
 import CardGrid from '@/components/CardGrid';
-import {
-  getCards,
-  getCollections,
-  getSeries,
-  getRarities,
-  getCollectionStats,
-  toggleCollection,
-  initializeUser,
-} from '@/lib/api';
+import { usePreloadedData } from '@/components/AppShell';
+import { toggleCollection, getCollectionStats } from '@/lib/api';
 import type {
-  Card,
   UserCollection,
-  Rarity,
   CollectionStats,
   FilterState,
   CardWithOwnership,
 } from '@/types';
 
 export default function Home() {
-  // 状態管理
-  const [cards, setCards] = useState<Card[]>([]);
-  const [collections, setCollections] = useState<Map<string, UserCollection>>(new Map());
-  const [series, setSeries] = useState<string[]>([]);
-  const [rarities, setRarities] = useState<Rarity[]>([]);
-  const [stats, setStats] = useState<CollectionStats | undefined>();
+  // プリロードされたデータを取得
+  const {
+    cards,
+    collections: preloadedCollections,
+    series,
+    rarities,
+    stats: preloadedStats,
+    isLoaded,
+    error,
+    refetch,
+  } = usePreloadedData();
+
+  // ローカル状態（更新用）
+  const [collections, setCollections] = useState<Map<string, UserCollection>>(preloadedCollections);
+  const [stats, setStats] = useState<CollectionStats | undefined>(preloadedStats);
   const [filter, setFilter] = useState<FilterState>({
     series: '',
     rarity: '',
@@ -36,50 +36,14 @@ export default function Home() {
     showGrayscale: true,
   });
   const [updatingCardIds, setUpdatingCardIds] = useState<Set<string>>(new Set());
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  // データ取得
-  const fetchData = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      // 新規ユーザーの場合は初期化
-      await initializeUser();
-
-      const [cardsData, collectionsData, seriesData, raritiesData, statsData] =
-        await Promise.all([
-          getCards(),
-          getCollections(),
-          getSeries(),
-          getRarities(),
-          getCollectionStats(),
-        ]);
-
-      setCards(cardsData);
-
-      // コレクションをカードIDでマップ化
-      const collectionMap = new Map<string, UserCollection>();
-      for (const col of collectionsData) {
-        collectionMap.set(col.card, col);
-      }
-      setCollections(collectionMap);
-
-      setSeries(seriesData);
-      setRarities(raritiesData);
-      setStats(statsData);
-    } catch (err) {
-      console.error('Failed to fetch data:', err);
-      setError('データの取得に失敗しました');
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  // プリロードデータが更新されたら同期
+  if (preloadedCollections !== collections && preloadedCollections.size > 0 && collections.size === 0) {
+    setCollections(preloadedCollections);
+  }
+  if (preloadedStats !== stats && preloadedStats && !stats) {
+    setStats(preloadedStats);
+  }
 
   // カードと所持状態を統合
   const cardsWithOwnership: CardWithOwnership[] = cards.map((card) => {
@@ -172,8 +136,8 @@ export default function Home() {
     }
   };
 
-  // ローディング表示
-  if (isLoading) {
+  // ローディング表示（スプラッシュ後に2回目以降のアクセスで表示）
+  if (!isLoaded) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
@@ -211,7 +175,7 @@ export default function Home() {
             <p className="text-lg font-medium text-gray-800">{error}</p>
             <button
               type="button"
-              onClick={fetchData}
+              onClick={refetch}
               className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
             >
               再試行
