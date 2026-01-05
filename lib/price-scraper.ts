@@ -85,9 +85,9 @@ export async function scrapeCardRushPrice(
       };
     }
 
-    // 価格を抽出（"○○円(税込)" 形式）
-    // 商品リストから最初の価格を取得
-    const priceMatch = html.match(/(\d{1,6})円\(税込\)/);
+    // 価格を抽出
+    // 形式: <span class="figure">380円</span><span class="tax_label list_tax_label">(税込)</span>
+    const priceMatch = html.match(/<span class="figure">(\d{1,6})円<\/span>/);
 
     if (priceMatch) {
       const price = parseInt(priceMatch[1], 10);
