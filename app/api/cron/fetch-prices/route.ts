@@ -152,8 +152,21 @@ export async function GET(request: NextRequest) {
       insertedCount += batch.length;
     }
 
+    // 全体の価格取得状況を取得してSlack通知
+    const today_date = new Date().toISOString().split('T')[0];
+    const { count: todayPriceCount } = await supabase
+      .from('card_prices')
+      .select('*', { count: 'exact', head: true })
+      .eq('fetched_date', today_date);
+
+    const { count: todayCardCount } = await supabase
+      .from('card_prices')
+      .select('card_id', { count: 'exact', head: true })
+      .eq('fetched_date', today_date)
+      .eq('condition', 'normal');
+
     const resultMessage = PRICE_MODE === 'scrape'
-      ? `${insertedCount}件の価格を取得しました\nカード: ${scrapedCount}件成功、${failedCount}件失敗\n価格レコード: ${totalPriceCount}件（状態別）\n処理: ${cardsToProcess.length}/${totalCards}件\nモード: ${PRICE_MODE}`
+      ? `本日の価格取得状況\nカード: ${todayCardCount || 0}/${totalCards}枚\n価格レコード: ${todayPriceCount || 0}件（状態別）`
       : `${insertedCount}件の価格を取得しました\nモード: ${PRICE_MODE}`;
     await sendSlackNotification(resultMessage);
 
