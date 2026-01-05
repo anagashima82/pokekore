@@ -41,6 +41,8 @@ export async function scrapeCardRushPrice(
     }
     const searchUrl = `${CARDRUSH_BASE_URL}/product-list?keyword=${encodeURIComponent(searchQuery)}`;
 
+    console.log(`[Scrape] Query: "${searchQuery}" URL: ${searchUrl}`);
+
     const response = await fetch(searchUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
@@ -50,11 +52,12 @@ export async function scrapeCardRushPrice(
     });
 
     if (!response.ok) {
-      console.error(`Failed to fetch from CardRush: ${response.status}`);
+      console.error(`[Scrape] Failed to fetch from CardRush: ${response.status}`);
       return null;
     }
 
     const html = await response.text();
+    console.log(`[Scrape] HTML length: ${html.length} chars`);
 
     // カード番号でマッチするか確認
     // 形式1: {001/064} [SV7a] - シリーズコードがブラケットで続く場合
@@ -67,9 +70,13 @@ export async function scrapeCardRushPrice(
       'i'
     );
 
-    if (!cardNumberPattern.test(html)) {
-      // カードが見つからない場合
-      console.log(`Card not found: ${seriesCode} ${cardNumber}`);
+    const cardFound = cardNumberPattern.test(html);
+    console.log(`[Scrape] Card pattern: ${cardNumberPattern}, Found: ${cardFound}`);
+
+    if (!cardFound) {
+      // カードが見つからない場合 - HTMLの一部を出力してデバッグ
+      const snippet = html.substring(0, 500);
+      console.log(`[Scrape] Card not found. HTML snippet: ${snippet}`);
       return {
         cardNumber,
         seriesCode,
