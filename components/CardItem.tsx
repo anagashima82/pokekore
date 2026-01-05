@@ -63,6 +63,13 @@ export default function CardItem({ card, onToggle, isUpdating, showGrayscale = t
       <div className="absolute bottom-1 right-1 rounded bg-black/70 px-1.5 py-0.5 text-xs text-white">
         {card.card_number}
       </div>
+
+      {/* 価格バッジ */}
+      {card.price !== undefined && (
+        <div className="absolute top-1 left-1 rounded bg-orange-500/90 px-1.5 py-0.5 text-xs text-white font-medium">
+          ¥{card.price.toLocaleString()}
+        </div>
+      )}
     </button>
   );
 }

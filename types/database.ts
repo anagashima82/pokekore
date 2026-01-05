@@ -81,6 +81,43 @@ export interface Database {
           is_collecting?: boolean
         }
       }
+      card_prices: {
+        Row: {
+          id: string
+          card_id: string
+          price: number
+          source: string
+          fetched_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          card_id: string
+          price: number
+          source?: string
+          fetched_at?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          card_id?: string
+          price?: number
+          source?: string
+          fetched_at?: string
+          created_at?: string
+        }
+      }
+    }
+    Views: {
+      latest_card_prices: {
+        Row: {
+          id: string
+          card_id: string
+          price: number
+          source: string
+          fetched_at: string
+        }
+      }
     }
   }
 }

@@ -4,6 +4,7 @@ import type {
   CollectionSetting,
   CollectionStats,
   Rarity,
+  CardPrice,
 } from '@/types';
 
 // Next.js API Routesを使用（同一オリジン）
@@ -100,4 +101,9 @@ export async function initializeUser(): Promise<void> {
   await fetchApi<{ message: string }>('/auth/init', {
     method: 'POST',
   });
+}
+
+// 価格関連API
+export async function getCardPrices(): Promise<CardPrice[]> {
+  return fetchApi<CardPrice[]>('/prices');
 }

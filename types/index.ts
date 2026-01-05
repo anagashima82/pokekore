@@ -70,4 +70,24 @@ export interface FilterState {
 export interface CardWithOwnership extends Card {
   owned: boolean;
   collection_id?: string;
+  price?: number;
+  price_fetched_at?: string;
+}
+
+// カード価格
+export interface CardPrice {
+  id: string;
+  card_id: string;
+  price: number;
+  source: string;
+  fetched_at: string;
+}
+
+// 価格履歴
+export interface PriceHistory {
+  card_id: string;
+  prices: {
+    price: number;
+    fetched_at: string;
+  }[];
 }

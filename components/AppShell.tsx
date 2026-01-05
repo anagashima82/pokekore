@@ -8,6 +8,7 @@ import {
   getSeries,
   getRarities,
   getCollectionStats,
+  getCardPrices,
   initializeUser,
 } from '@/lib/api';
 import type {
@@ -15,12 +16,14 @@ import type {
   UserCollection,
   Rarity,
   CollectionStats,
+  CardPrice,
 } from '@/types';
 
 // プリロードデータの型
 interface PreloadedData {
   cards: Card[];
   collections: Map<string, UserCollection>;
+  prices: Map<string, CardPrice>;
   series: string[];
   rarities: Rarity[];
   stats: CollectionStats | undefined;
@@ -53,6 +56,7 @@ export default function AppShell({ children }: AppShellProps) {
   // プリロードデータ
   const [cards, setCards] = useState<Card[]>([]);
   const [collections, setCollections] = useState<Map<string, UserCollection>>(new Map());
+  const [prices, setPrices] = useState<Map<string, CardPrice>>(new Map());
   const [series, setSeries] = useState<string[]>([]);
   const [rarities, setRarities] = useState<Rarity[]>([]);
   const [stats, setStats] = useState<CollectionStats | undefined>();
@@ -66,13 +70,14 @@ export default function AppShell({ children }: AppShellProps) {
       // 新規ユーザーの場合は初期化
       await initializeUser();
 
-      const [cardsData, collectionsData, seriesData, raritiesData, statsData] =
+      const [cardsData, collectionsData, seriesData, raritiesData, statsData, pricesData] =
         await Promise.all([
           getCards(),
           getCollections(),
           getSeries(),
           getRarities(),
           getCollectionStats(),
+          getCardPrices().catch(() => []), // 価格データがない場合は空配列
         ]);
 
       setCards(cardsData);
@@ -83,6 +88,13 @@ export default function AppShell({ children }: AppShellProps) {
         collectionMap.set(col.card, col);
       }
       setCollections(collectionMap);
+
+      // 価格をカードIDでマップ化
+      const priceMap = new Map<string, CardPrice>();
+      for (const price of pricesData) {
+        priceMap.set(price.card_id, price);
+      }
+      setPrices(priceMap);
 
       setSeries(seriesData);
       setRarities(raritiesData);
@@ -133,6 +145,7 @@ export default function AppShell({ children }: AppShellProps) {
   const preloadedData: PreloadedData = {
     cards,
     collections,
+    prices,
     series,
     rarities,
     stats,

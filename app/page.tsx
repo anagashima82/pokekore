@@ -18,6 +18,7 @@ export default function Home() {
   const {
     cards,
     collections: preloadedCollections,
+    prices,
     series,
     rarities,
     stats: preloadedStats,
@@ -45,13 +46,16 @@ export default function Home() {
     setStats(preloadedStats);
   }
 
-  // カードと所持状態を統合
+  // カードと所持状態・価格を統合
   const cardsWithOwnership: CardWithOwnership[] = cards.map((card) => {
     const collection = collections.get(card.id);
+    const price = prices.get(card.id);
     return {
       ...card,
       owned: collection?.owned ?? false,
       collection_id: collection?.id,
+      price: price?.price,
+      price_fetched_at: price?.fetched_at,
     };
   });
 
