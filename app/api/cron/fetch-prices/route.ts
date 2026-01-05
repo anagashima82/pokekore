@@ -6,10 +6,14 @@ import { scrapeCardRushPrice, getMockPrice } from '@/lib/price-scraper';
 // vercel.jsonで設定: { "path": "/api/cron/fetch-prices", "schedule": "0 6 * * *" }
 
 // スクレイピング間の遅延（ミリ秒）- サーバー負荷軽減のため
-const SCRAPE_DELAY_MS = 500;
+const SCRAPE_DELAY_MS = 300;
 
 // モードを環境変数で切り替え（'scrape' | 'mock'）
 const PRICE_MODE = process.env.PRICE_MODE || 'scrape';
+
+// 1回の実行で処理する最大カード数（Vercelタイムアウト対策）
+// Hobbyプランは10秒、Proプランは60秒
+const MAX_CARDS_PER_RUN = parseInt(process.env.MAX_CARDS_PER_RUN || '20', 10);
 
 // Slack Webhook URL
 const SLACK_WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL;
@@ -61,13 +65,18 @@ export async function GET(request: NextRequest) {
     }
 
     const typedCards = cards as { id: string; name: string; series_code: string; card_number: string }[];
+
+    // 処理するカード数を制限（タイムアウト対策）
+    const cardsToProcess = typedCards.slice(0, MAX_CARDS_PER_RUN);
+    const totalCards = typedCards.length;
+
     const priceRecords: { card_id: string; price: number; source: string; fetched_at: string }[] = [];
     let scrapedCount = 0;
     let failedCount = 0;
 
     if (PRICE_MODE === 'scrape') {
       // 実際のスクレイピング
-      for (const card of typedCards) {
+      for (const card of cardsToProcess) {
         const result = await scrapeCardRushPrice(card.series_code, card.card_number);
 
         if (result && result.price !== null) {
@@ -86,7 +95,7 @@ export async function GET(request: NextRequest) {
         await new Promise((resolve) => setTimeout(resolve, SCRAPE_DELAY_MS));
       }
     } else {
-      // モックモード
+      // モックモード（モックは高速なので全件処理可能）
       for (const card of typedCards) {
         priceRecords.push({
           card_id: card.id,
@@ -116,7 +125,9 @@ export async function GET(request: NextRequest) {
       insertedCount += batch.length;
     }
 
-    const resultMessage = `${insertedCount}件の価格を取得しました（成功: ${scrapedCount}件、失敗: ${failedCount}件）\nモード: ${PRICE_MODE}`;
+    const resultMessage = PRICE_MODE === 'scrape'
+      ? `${insertedCount}件の価格を取得しました（成功: ${scrapedCount}件、失敗: ${failedCount}件）\n処理: ${cardsToProcess.length}/${totalCards}件\nモード: ${PRICE_MODE}`
+      : `${insertedCount}件の価格を取得しました\nモード: ${PRICE_MODE}`;
     await sendSlackNotification(resultMessage);
 
     return NextResponse.json({
