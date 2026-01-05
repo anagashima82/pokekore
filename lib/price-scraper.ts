@@ -17,17 +17,28 @@ const CARDRUSH_BASE_URL = 'https://www.cardrush-pokemon.jp';
 
 /**
  * カードラッシュで検索して価格を取得
- * 検索クエリ: "シリーズコード カード番号" (例: "SV7a 001")
+ * 検索クエリ: "【レアリティ】{カード番号} [シリーズコード]" 形式
  */
 export async function scrapeCardRushPrice(
   seriesCode: string,
-  cardNumber: string
+  cardNumber: string,
+  rarity?: string
 ): Promise<ScrapedPrice | null> {
   try {
-    // 検索クエリを作成（シリーズコード + カード番号のみ）
     // シリーズコードは大文字に変換（m1l -> M1L）
     const upperSeriesCode = seriesCode.toUpperCase();
-    const searchQuery = `${upperSeriesCode} ${cardNumber}`;
+
+    // 検索クエリを作成
+    // 形式: 【AR】{064/063} [M1L] のような形式で検索
+    // 総数が不明なので、カード番号のみで部分一致検索
+    let searchQuery: string;
+    if (rarity) {
+      // レアリティがある場合: 【AR】{064 [M1L]
+      searchQuery = `【${rarity}】{${cardNumber} [${upperSeriesCode}]`;
+    } else {
+      // レアリティがない場合: {064 [M1L]
+      searchQuery = `{${cardNumber} [${upperSeriesCode}]`;
+    }
     const searchUrl = `${CARDRUSH_BASE_URL}/product-list?keyword=${encodeURIComponent(searchQuery)}`;
 
     const response = await fetch(searchUrl, {

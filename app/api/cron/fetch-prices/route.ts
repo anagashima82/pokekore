@@ -51,10 +51,10 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = createServiceClient();
 
-    // 全カードを取得
+    // 全カードを取得（レアリティも含む）
     const { data: cards, error: cardsError } = await supabase
       .from('cards')
-      .select('id, name, series_code, card_number');
+      .select('id, name, series_code, card_number, rarity');
 
     if (cardsError) {
       return NextResponse.json({ error: cardsError.message }, { status: 500 });
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: 'No cards found' });
     }
 
-    const typedCards = cards as { id: string; name: string; series_code: string; card_number: string }[];
+    const typedCards = cards as { id: string; name: string; series_code: string; card_number: string; rarity: string }[];
 
     // 処理するカード数を制限（タイムアウト対策）
     const cardsToProcess = typedCards.slice(0, MAX_CARDS_PER_RUN);
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
     if (PRICE_MODE === 'scrape') {
       // 実際のスクレイピング
       for (const card of cardsToProcess) {
-        const result = await scrapeCardRushPrice(card.series_code, card.card_number);
+        const result = await scrapeCardRushPrice(card.series_code, card.card_number, card.rarity);
 
         if (result && result.price !== null) {
           priceRecords.push({
