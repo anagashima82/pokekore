@@ -49,12 +49,17 @@ async function scrapeCardRushPrice(
   rarity?: string
 ): Promise<ScrapedPriceResult | null> {
   try {
-    // カードラッシュではシリーズコードの表記が不安定なので、カード番号で検索
+    // カード番号を3桁に0埋め（例: 79 → 079）
+    const paddedCardNumber = cardNumber.padStart(3, '0');
+    // シリーズコードを大文字に変換（例: sv1s → SV1S）
+    const upperSeriesCode = seriesCode.toUpperCase();
+
+    // 検索クエリ: 【AR】{079} [SV1S] 形式
     let searchQuery: string;
     if (rarity) {
-      searchQuery = `【${rarity}】{${cardNumber}}`;
+      searchQuery = `【${rarity}】{${paddedCardNumber}} [${upperSeriesCode}]`;
     } else {
-      searchQuery = `{${cardNumber}}`;
+      searchQuery = `{${paddedCardNumber}} [${upperSeriesCode}]`;
     }
 
     const searchUrl = `${CARDRUSH_BASE_URL}/product-list?keyword=${encodeURIComponent(searchQuery)}`;
