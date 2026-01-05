@@ -25,8 +25,9 @@ export async function scrapeCardRushPrice(
 ): Promise<ScrapedPrice | null> {
   try {
     // 検索クエリを作成（シリーズコード + カード番号のみ）
-    // 例: "SV7a 001" で検索すると {001/064} [SV7a] のカードがヒット
-    const searchQuery = `${seriesCode} ${cardNumber}`;
+    // シリーズコードは大文字に変換（m1l -> M1L）
+    const upperSeriesCode = seriesCode.toUpperCase();
+    const searchQuery = `${upperSeriesCode} ${cardNumber}`;
     const searchUrl = `${CARDRUSH_BASE_URL}/product-list?keyword=${encodeURIComponent(searchQuery)}`;
 
     const response = await fetch(searchUrl, {
