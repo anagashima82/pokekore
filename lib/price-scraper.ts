@@ -44,16 +44,20 @@ export async function scrapeCardRushPrice(
 
     const html = await response.text();
 
-    // カード番号でマッチするか確認（例: {001/064} [SV7a]）
-    // 番号の先頭ゼロを除去してマッチング（001 -> 1）
-    const numWithoutLeadingZeros = cardNumber.replace(/^0+/, '');
-    const cardPattern = new RegExp(
-      `\\{0*${numWithoutLeadingZeros}/\\d+\\}\\s*\\[${seriesCode}\\]`,
+    // カード番号でマッチするか確認
+    // 形式1: {001/064} [SV7a] - シリーズコードがブラケットで続く場合
+    // 形式2: {064/063} - シリーズコードがタイトルに含まれない場合
+    const numWithoutLeadingZeros = cardNumber.replace(/^0+/, '') || '0';
+
+    // まずカード番号だけでマッチを確認
+    const cardNumberPattern = new RegExp(
+      `\\{0*${numWithoutLeadingZeros}/\\d+\\}`,
       'i'
     );
 
-    if (!cardPattern.test(html)) {
+    if (!cardNumberPattern.test(html)) {
       // カードが見つからない場合
+      console.log(`Card not found: ${seriesCode} ${cardNumber}`);
       return {
         cardNumber,
         seriesCode,
@@ -63,7 +67,7 @@ export async function scrapeCardRushPrice(
     }
 
     // 価格を抽出（"○○円(税込)" 形式）
-    // 最初にマッチした価格を取得（通常は最安値が先に表示される）
+    // 商品リストから最初の価格を取得
     const priceMatch = html.match(/(\d{1,6})円\(税込\)/);
 
     if (priceMatch) {
