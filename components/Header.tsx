@@ -32,16 +32,16 @@ export default function Header({ stats }: HeaderProps) {
       {/* オーバーレイコンテンツ */}
       <div className="relative z-10 px-4 py-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-bold text-orange-600 drop-shadow-sm">
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold text-orange-600 bg-white/80 px-3 py-1 rounded-lg shadow-sm">
               ポケコレ
             </h1>
             {stats && (
-              <div className="flex items-center gap-2 text-sm bg-orange-500 text-white rounded-full px-3 py-1 shadow-sm">
+              <div className="flex items-center gap-2 text-sm bg-white/80 text-orange-600 font-medium rounded-lg px-3 py-1 shadow-sm">
                 <span>
                   {stats.owned} / {stats.total}
                 </span>
-                <span className="font-medium">{stats.percentage}%</span>
+                <span className="border-l border-orange-300 pl-2">{stats.percentage}%</span>
               </div>
             )}
           </div>
