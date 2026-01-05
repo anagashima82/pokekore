@@ -17,15 +17,19 @@ const CARDRUSH_BASE_URL = 'https://www.cardrush-pokemon.jp';
 const SCRAPE_DELAY_MS = 500;
 
 // シリーズごとのノーマルカード総枚数
-// カードラッシュの検索形式: 【AR】{079/078} の「/078」部分に使用
+// カードラッシュの検索形式: AR 079/078 SV1S の「/078」部分に使用
 const SERIES_TOTAL_CARDS: Record<string, number | string> = {
+  // ソード＆シールドシリーズ
+  's12a': 172,
+
+  // スカーレット＆バイオレットシリーズ
   'sv1s': 78,
   'sv1v': 78,
   'sv1a': 73,
   'sv2d': 71,
   'sv2p': 71,
   'sv2a': 165,
-  'sv3': 62,
+  'sv3': 108,
   'sv3a': 62,
   'sv4k': 66,
   'sv4m': 66,
@@ -33,13 +37,33 @@ const SERIES_TOTAL_CARDS: Record<string, number | string> = {
   'sv5k': 71,
   'sv5m': 71,
   'sv5a': 66,
-  'sv6': 64,
+  'sv6': 101,
   'sv6a': 64,
-  'sv7': 64,
-  'sv7a': 70,
+  'sv7': 102,
+  'sv7a': 64,
   'sv8': 106,
   'sv8a': 90,
+  'sv9': 38,
+  'sv9a': 96,
+  'sv10': 28,
+  'sv11w': 80,
+  'sv11b': 80,
+  'svg': 28,
+  'svod': 20,
+  'svom': 20,
+
+  // ポケモンカード ポケットシリーズ
+  'm1s': 86,
+  'm1l': 86,
+  'mbd': 20,
+  'mbg': 20,
+  'm2': 86,
+  'm2a': 86,
+  'mc': 60,
+
+  // プロモカード
   'promo': 'SV-P',
+  'promo_sv': 'SV-P',
 };
 
 // Supabase設定

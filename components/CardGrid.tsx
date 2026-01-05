@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import SeriesSection from './SeriesSection';
+import ScrollScrubber from './ScrollScrubber';
 import { getSeriesOrder } from '@/lib/constants';
 import type { CardWithOwnership, FilterState } from '@/types';
 
@@ -87,19 +88,25 @@ export default function CardGrid({
     );
   }
 
+  // シリーズコードのリストを抽出
+  const seriesCodes = groupedCards.map(([seriesCode]) => seriesCode);
+
   return (
-    <div className="pb-4">
-      {groupedCards.map(([seriesCode, seriesCards]) => (
-        <SeriesSection
-          key={seriesCode}
-          seriesCode={seriesCode}
-          cards={seriesCards}
-          onToggle={onToggle}
-          onFavoriteToggle={onFavoriteToggle}
-          updatingCardIds={updatingCardIds}
-          showGrayscale={filter.showGrayscale}
-        />
-      ))}
-    </div>
+    <>
+      <div className="pb-4">
+        {groupedCards.map(([seriesCode, seriesCards]) => (
+          <SeriesSection
+            key={seriesCode}
+            seriesCode={seriesCode}
+            cards={seriesCards}
+            onToggle={onToggle}
+            onFavoriteToggle={onFavoriteToggle}
+            updatingCardIds={updatingCardIds}
+            showGrayscale={filter.showGrayscale}
+          />
+        ))}
+      </div>
+      <ScrollScrubber seriesCodes={seriesCodes} />
+    </>
   );
 }

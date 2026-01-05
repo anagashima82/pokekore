@@ -25,7 +25,7 @@ export default function SeriesSection({
   const percentage = totalCount > 0 ? Math.round((ownedCount / totalCount) * 100) : 0;
 
   return (
-    <section className="mb-6">
+    <section className="mb-6" data-series={seriesCode}>
       {/* セクションヘッダー */}
       <div className="sticky top-[57px] z-[5] bg-gray-100 px-4 py-2 flex items-center justify-between">
         <h2 className="font-bold text-gray-800">{seriesCode}</h2>

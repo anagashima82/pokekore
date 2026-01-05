@@ -15,6 +15,8 @@ interface CardItemProps {
 
 // 長押し時間（ミリ秒）
 const LONG_PRESS_DURATION = 500;
+// スクロール検出の閾値（ピクセル）- 小さくしてすぐスクロールを検知
+const SCROLL_THRESHOLD = 3;
 
 export default function CardItem({ card, onToggle, onFavoriteToggle, isUpdating, showGrayscale = true }: CardItemProps) {
   const [showModal, setShowModal] = useState(false);
@@ -24,14 +26,17 @@ export default function CardItem({ card, onToggle, onFavoriteToggle, isUpdating,
   const pressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const pressStartTimeRef = useRef<number>(0);
+  const startPosRef = useRef<{ x: number; y: number } | null>(null);
+  const longPressCompletedRef = useRef<boolean>(false);
 
   const imageSrc = card.image_path || '/placeholder-card.png';
   const shouldGrayscale = showGrayscale && !card.owned;
 
   // 長押し開始
-  const startLongPress = useCallback(() => {
+  const startLongPress = useCallback((x: number, y: number) => {
     if (isUpdating) return;
 
+    startPosRef.current = { x, y };
     setIsLongPressing(true);
     setPressProgress(0);
     pressStartTimeRef.current = Date.now();
@@ -54,6 +59,7 @@ export default function CardItem({ card, onToggle, onFavoriteToggle, isUpdating,
   const cancelLongPress = useCallback(() => {
     setIsLongPressing(false);
     setPressProgress(0);
+    startPosRef.current = null;
 
     if (pressTimerRef.current) {
       clearTimeout(pressTimerRef.current);
@@ -87,18 +93,42 @@ export default function CardItem({ card, onToggle, onFavoriteToggle, isUpdating,
     onFavoriteToggle?.(card.id);
   };
 
-  // タッチ/マウスイベントハンドラー
-  const handlePointerDown = (e: React.PointerEvent) => {
+  // タッチイベントハンドラー（スクロール許可のため）
+  const handleTouchStart = (e: React.TouchEvent) => {
     // アイコンボタンの上では長押しを開始しない
     if ((e.target as HTMLElement).closest('[data-icon-button]')) return;
-    startLongPress();
+    const touch = e.touches[0];
+    startLongPress(touch.clientX, touch.clientY);
   };
 
-  const handlePointerUp = () => {
+  const handleTouchMove = (e: React.TouchEvent) => {
+    // スクロール中は長押しをキャンセル
+    if (startPosRef.current && e.touches[0]) {
+      const touch = e.touches[0];
+      const dx = Math.abs(touch.clientX - startPosRef.current.x);
+      const dy = Math.abs(touch.clientY - startPosRef.current.y);
+      if (dx > SCROLL_THRESHOLD || dy > SCROLL_THRESHOLD) {
+        cancelLongPress();
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
     cancelLongPress();
   };
 
-  const handlePointerLeave = () => {
+  // マウスイベントハンドラー（デスクトップ用）
+  const handleMouseDown = (e: React.MouseEvent) => {
+    // アイコンボタンの上では長押しを開始しない
+    if ((e.target as HTMLElement).closest('[data-icon-button]')) return;
+    startLongPress(e.clientX, e.clientY);
+  };
+
+  const handleMouseUp = () => {
+    cancelLongPress();
+  };
+
+  const handleMouseLeave = () => {
     cancelLongPress();
   };
 
@@ -109,12 +139,15 @@ export default function CardItem({ card, onToggle, onFavoriteToggle, isUpdating,
   return (
     <>
       <div
-        onPointerDown={handlePointerDown}
-        onPointerUp={handlePointerUp}
-        onPointerLeave={handlePointerLeave}
-        onPointerCancel={handlePointerUp}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
         onContextMenu={(e) => e.preventDefault()}
-        className={`relative aspect-[63/88] w-full overflow-hidden rounded-lg transition-all duration-200 select-none touch-none ${
+        className={`relative aspect-[63/88] w-full overflow-hidden rounded-lg transition-all duration-200 select-none ${
           isUpdating ? 'opacity-50 cursor-wait' : 'cursor-pointer'
         } ${shouldGrayscale ? 'grayscale opacity-50' : ''}`}
       >
