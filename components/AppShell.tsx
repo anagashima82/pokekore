@@ -49,9 +49,10 @@ interface AppShellProps {
 
 export default function AppShell({ children }: AppShellProps) {
   const [showSplash, setShowSplash] = useState(true);
-  const [hasShownSplash, setHasShownSplash] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const [splashTimerDone, setSplashTimerDone] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [skipSplashAnimation, setSkipSplashAnimation] = useState(false);
 
   // プリロードデータ
   const [cards, setCards] = useState<Card[]>([]);
@@ -108,23 +109,23 @@ export default function AppShell({ children }: AppShellProps) {
   }, []);
 
   useEffect(() => {
+    // 常にデータを取得する
+    fetchData();
+
     // セッション中に既にスプラッシュを表示したかチェック
     const splashShown = sessionStorage.getItem('splashShown');
     if (splashShown) {
-      setShowSplash(false);
-      setHasShownSplash(true);
+      // スプラッシュアニメーションをスキップ（ただしデータ読み込みは待つ）
+      setSkipSplashAnimation(true);
       setSplashTimerDone(true);
-    } else {
-      // スプラッシュ表示中にデータをプリロード
-      fetchData();
     }
+    setIsInitialized(true);
   }, [fetchData]);
 
   // スプラッシュタイマー完了とデータ読み込み完了の両方を待つ
   useEffect(() => {
     if (splashTimerDone && dataLoaded && showSplash) {
       setShowSplash(false);
-      setHasShownSplash(true);
       sessionStorage.setItem('splashShown', 'true');
     }
   }, [splashTimerDone, dataLoaded, showSplash]);
@@ -133,12 +134,14 @@ export default function AppShell({ children }: AppShellProps) {
     setSplashTimerDone(true);
   };
 
-  // 初回チェック中は何も表示しない（ちらつき防止）
-  if (!hasShownSplash && typeof window !== 'undefined') {
-    const splashShown = sessionStorage.getItem('splashShown');
-    if (splashShown) {
-      return <>{children}</>;
-    }
+  // 初期化前は白い画面を表示（ちらつき防止）
+  if (!isInitialized) {
+    return <div className="fixed inset-0 bg-white" />;
+  }
+
+  // データ読み込み中で、スプラッシュアニメーションをスキップする場合は白い画面を表示
+  if (skipSplashAnimation && !dataLoaded) {
+    return <div className="fixed inset-0 bg-white" />;
   }
 
   // プリロードデータをコンテキストで提供
