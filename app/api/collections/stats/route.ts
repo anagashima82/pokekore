@@ -12,7 +12,7 @@ export async function GET() {
     .eq('user_id', DEFAULT_USER_ID)
     .eq('is_collecting', true);
 
-  const collectingRarities = settings?.map((s) => s.rarity) || [];
+  const collectingRarities = (settings as { rarity: string }[] | null)?.map((s) => s.rarity) || [];
 
   if (collectingRarities.length === 0) {
     return NextResponse.json({
@@ -43,7 +43,7 @@ export async function GET() {
     .select('series_code')
     .in('rarity', collectingRarities);
 
-  const uniqueSeries = [...new Set(seriesData?.map((d) => d.series_code) || [])];
+  const uniqueSeries = [...new Set((seriesData as { series_code: string }[] | null)?.map((d) => d.series_code) || [])];
 
   // シリーズ別統計を計算
   const bySeriesPromises = uniqueSeries.map(async (seriesCode) => {

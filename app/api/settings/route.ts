@@ -16,7 +16,8 @@ export async function GET() {
   }
 
   // レアリティ表示名を追加
-  const settings = data?.map((item) => {
+  type SettingRecord = { id: string; user_id: string; rarity: string; is_collecting: boolean };
+  const settings = (data as SettingRecord[] | null)?.map((item) => {
     const rarityInfo = RARITY_CHOICES.find((r) => r.code === item.rarity);
     return {
       ...item,

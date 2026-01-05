@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     .eq('user_id', DEFAULT_USER_ID)
     .eq('is_collecting', true);
 
-  const collectingRarities = settings?.map((s) => s.rarity) || [];
+  const collectingRarities = (settings as { rarity: string }[] | null)?.map((s) => s.rarity) || [];
 
   // コレクションとカード情報を結合して取得
   let query = supabase

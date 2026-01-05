@@ -28,21 +28,30 @@ export async function PUT(
     .eq('card_id', cardId)
     .single();
 
-  let result;
+  type CollectionRecord = {
+    id: string;
+    user_id: string;
+    card_id: string;
+    owned: boolean;
+    updated_at: string;
+  };
+
+  let result: CollectionRecord;
 
   if (existing) {
     // 既存のコレクションがあれば、所持状態をトグル
+    const existingRecord = existing as CollectionRecord;
     const { data, error } = await supabase
       .from('user_collections')
-      .update({ owned: !existing.owned, updated_at: new Date().toISOString() })
-      .eq('id', existing.id)
+      .update({ owned: !existingRecord.owned, updated_at: new Date().toISOString() } as never)
+      .eq('id', existingRecord.id)
       .select()
       .single();
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
-    result = data;
+    result = data as CollectionRecord;
   } else {
     // 新規作成（初回は所持済みとして登録）
     const { data, error } = await supabase
@@ -51,14 +60,14 @@ export async function PUT(
         user_id: DEFAULT_USER_ID,
         card_id: cardId,
         owned: true,
-      })
+      } as never)
       .select()
       .single();
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
-    result = data;
+    result = data as CollectionRecord;
   }
 
   // カード情報を含めてレスポンス

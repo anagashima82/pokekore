@@ -21,21 +21,23 @@ export async function PUT(
     .eq('rarity', rarity)
     .single();
 
-  let result;
+  type SettingRecord = { id: string; user_id: string; rarity: string; is_collecting: boolean };
+  let result: SettingRecord;
 
   if (existing) {
     // 更新
+    const existingRecord = existing as SettingRecord;
     const { data, error } = await supabase
       .from('collection_settings')
-      .update({ is_collecting: isCollecting })
-      .eq('id', existing.id)
+      .update({ is_collecting: isCollecting } as never)
+      .eq('id', existingRecord.id)
       .select()
       .single();
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
-    result = data;
+    result = data as SettingRecord;
   } else {
     // 新規作成
     const { data, error } = await supabase
@@ -44,14 +46,14 @@ export async function PUT(
         user_id: DEFAULT_USER_ID,
         rarity,
         is_collecting: isCollecting,
-      })
+      } as never)
       .select()
       .single();
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
-    result = data;
+    result = data as SettingRecord;
   }
 
   // レアリティ表示名を追加
