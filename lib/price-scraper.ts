@@ -91,9 +91,9 @@ export async function scrapeCardRushPrice(
     //       <span class="figure">350円</span>
     const prices: ScrapedPrice[] = [];
 
-    // 商品ブロックを抽出（goods_nameから次のgoods_nameまで、または価格まで）
-    // より正確にパースするため、goods_nameとfigureを順番に抽出
-    const goodsNameRegex = /<span class="goods_name">(.*?)<\/span>/gs;
+    // 商品ブロック全体を抽出（goods_nameの開始から2つ目の</span>まで、ネストを考慮）
+    // パターン: <span class="goods_name">...内容...</span></span>
+    const goodsNameRegex = /<span class="goods_name">([\s\S]*?)<\/span><\/span>/g;
     const priceRegex = /<span class="figure">(\d{1,6})円<\/span>/g;
 
     const goodsNames: string[] = [];
@@ -101,7 +101,9 @@ export async function scrapeCardRushPrice(
 
     let match;
     while ((match = goodsNameRegex.exec(html)) !== null) {
-      goodsNames.push(match[1]);
+      // HTMLタグを除去してプレーンテキストを取得
+      const plainText = match[1].replace(/<[^>]*>/g, '');
+      goodsNames.push(plainText);
     }
 
     while ((match = priceRegex.exec(html)) !== null) {
@@ -116,7 +118,7 @@ export async function scrapeCardRushPrice(
       const goodsName = goodsNames[i];
       const price = priceValues[i];
 
-      // このカードに関連する商品かチェック
+      // このカードに関連する商品かチェック（プレーンテキストでマッチ）
       if (!cardNumberPattern.test(goodsName)) {
         continue;
       }
