@@ -14,7 +14,7 @@ export async function GET() {
   }
 
   // 重複を除去してシリーズコードのみの配列を返す
-  const uniqueSeries = [...new Set(data.map((d) => d.series_code))];
+  const uniqueSeries = [...new Set((data as { series_code: string }[]).map((d) => d.series_code))];
 
   return NextResponse.json(uniqueSeries);
 }
