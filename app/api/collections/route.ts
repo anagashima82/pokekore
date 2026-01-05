@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
       user_id,
       card_id,
       owned,
+      is_favorite,
       updated_at,
       cards!inner (
         id,
@@ -74,6 +75,7 @@ export async function GET(request: NextRequest) {
     user_id: string;
     card_id: string;
     owned: boolean;
+    is_favorite: boolean;
     updated_at: string;
     cards: unknown;
   };
@@ -83,6 +85,7 @@ export async function GET(request: NextRequest) {
     card: item.card_id,
     card_detail: item.cards,
     owned: item.owned,
+    is_favorite: item.is_favorite,
     updated_at: item.updated_at,
   }));
 
