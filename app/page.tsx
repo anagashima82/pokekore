@@ -1,64 +1,238 @@
-import Image from "next/image";
+'use client';
+
+import { useEffect, useState, useCallback } from 'react';
+import Header from '@/components/Header';
+import FilterBar from '@/components/FilterBar';
+import CardGrid from '@/components/CardGrid';
+import {
+  getCards,
+  getCollections,
+  getSeries,
+  getRarities,
+  getCollectionStats,
+  toggleCollection,
+} from '@/lib/api';
+import type {
+  Card,
+  UserCollection,
+  Rarity,
+  CollectionStats,
+  FilterState,
+  CardWithOwnership,
+} from '@/types';
 
 export default function Home() {
+  // 状態管理
+  const [cards, setCards] = useState<Card[]>([]);
+  const [collections, setCollections] = useState<Map<string, UserCollection>>(new Map());
+  const [series, setSeries] = useState<string[]>([]);
+  const [rarities, setRarities] = useState<Rarity[]>([]);
+  const [stats, setStats] = useState<CollectionStats | undefined>();
+  const [filter, setFilter] = useState<FilterState>({
+    series: '',
+    rarity: '',
+    owned: 'all',
+  });
+  const [updatingCardIds, setUpdatingCardIds] = useState<Set<string>>(new Set());
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // データ取得
+  const fetchData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const [cardsData, collectionsData, seriesData, raritiesData, statsData] =
+        await Promise.all([
+          getCards(),
+          getCollections(),
+          getSeries(),
+          getRarities(),
+          getCollectionStats(),
+        ]);
+
+      setCards(cardsData);
+
+      // コレクションをカードIDでマップ化
+      const collectionMap = new Map<string, UserCollection>();
+      for (const col of collectionsData) {
+        collectionMap.set(col.card, col);
+      }
+      setCollections(collectionMap);
+
+      setSeries(seriesData);
+      setRarities(raritiesData);
+      setStats(statsData);
+    } catch (err) {
+      console.error('Failed to fetch data:', err);
+      setError('データの取得に失敗しました');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // カードと所持状態を統合
+  const cardsWithOwnership: CardWithOwnership[] = cards.map((card) => {
+    const collection = collections.get(card.id);
+    return {
+      ...card,
+      owned: collection?.owned ?? false,
+      collection_id: collection?.id,
+    };
+  });
+
+  // 所持状態トグル（楽観的更新）
+  const handleToggle = async (cardId: string) => {
+    // 既に更新中なら無視
+    if (updatingCardIds.has(cardId)) return;
+
+    // 楽観的更新
+    const currentCollection = collections.get(cardId);
+    const newOwned = !currentCollection?.owned;
+
+    setUpdatingCardIds((prev) => new Set([...prev, cardId]));
+
+    // 楽観的にUIを更新
+    setCollections((prev) => {
+      const newMap = new Map(prev);
+      if (currentCollection) {
+        newMap.set(cardId, { ...currentCollection, owned: newOwned });
+      } else {
+        // 新規コレクション（仮のデータ）
+        newMap.set(cardId, {
+          id: 'temp',
+          user_id: '',
+          card: cardId,
+          card_detail: cards.find((c) => c.id === cardId)!,
+          owned: true,
+          updated_at: new Date().toISOString(),
+        });
+      }
+      return newMap;
+    });
+
+    // 統計も楽観的に更新
+    if (stats) {
+      setStats({
+        ...stats,
+        owned: stats.owned + (newOwned ? 1 : -1),
+        percentage: Math.round(
+          ((stats.owned + (newOwned ? 1 : -1)) / stats.total) * 100 * 10
+        ) / 10,
+      });
+    }
+
+    try {
+      const result = await toggleCollection(cardId);
+      setCollections((prev) => {
+        const newMap = new Map(prev);
+        newMap.set(cardId, result);
+        return newMap;
+      });
+
+      // 統計を再取得
+      const newStats = await getCollectionStats();
+      setStats(newStats);
+    } catch (err) {
+      console.error('Failed to toggle collection:', err);
+      // 失敗した場合は元に戻す
+      if (currentCollection) {
+        setCollections((prev) => {
+          const newMap = new Map(prev);
+          newMap.set(cardId, currentCollection);
+          return newMap;
+        });
+      } else {
+        setCollections((prev) => {
+          const newMap = new Map(prev);
+          newMap.delete(cardId);
+          return newMap;
+        });
+      }
+      // 統計も元に戻す
+      if (stats) {
+        setStats(stats);
+      }
+    } finally {
+      setUpdatingCardIds((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(cardId);
+        return newSet;
+      });
+    }
+  };
+
+  // ローディング表示
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex items-center justify-center py-20">
+          <div className="flex flex-col items-center gap-4">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
+            <p className="text-gray-600">読み込み中...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // エラー表示
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex items-center justify-center py-20">
+          <div className="flex flex-col items-center gap-4 text-center px-4">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-16 h-16 text-red-500"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z"
+              />
+            </svg>
+            <p className="text-lg font-medium text-gray-800">{error}</p>
+            <button
+              type="button"
+              onClick={fetchData}
+              className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            >
+              再試行
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="min-h-screen bg-gray-50">
+      <Header stats={stats} />
+      <FilterBar
+        series={series}
+        rarities={rarities}
+        filter={filter}
+        onFilterChange={setFilter}
+      />
+      <main>
+        <CardGrid
+          cards={cardsWithOwnership}
+          filter={filter}
+          onToggle={handleToggle}
+          updatingCardIds={updatingCardIds}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
       </main>
     </div>
   );
