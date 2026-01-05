@@ -49,13 +49,12 @@ async function scrapeCardRushPrice(
   rarity?: string
 ): Promise<ScrapedPriceResult | null> {
   try {
-    const upperSeriesCode = seriesCode.toUpperCase();
-
+    // カードラッシュではシリーズコードの表記が不安定なので、カード番号で検索
     let searchQuery: string;
     if (rarity) {
-      searchQuery = `【${rarity}】{${cardNumber} [${upperSeriesCode}]`;
+      searchQuery = `【${rarity}】{${cardNumber}}`;
     } else {
-      searchQuery = `{${cardNumber} [${upperSeriesCode}]`;
+      searchQuery = `{${cardNumber}}`;
     }
 
     const searchUrl = `${CARDRUSH_BASE_URL}/product-list?keyword=${encodeURIComponent(searchQuery)}`;
@@ -83,7 +82,8 @@ async function scrapeCardRushPrice(
 
     const prices: ScrapedPrice[] = [];
     const goodsNameRegex = /<span class="goods_name">([\s\S]*?)<\/span><\/span>/g;
-    const priceRegex = /<span class="figure">(\d{1,6})円<\/span>/g;
+    // 価格にはカンマが含まれる場合がある（例: 2,180円）
+    const priceRegex = /<span class="figure">([\d,]+)円<\/span>/g;
 
     const goodsNames: string[] = [];
     const priceValues: number[] = [];
@@ -95,7 +95,8 @@ async function scrapeCardRushPrice(
     }
 
     while ((match = priceRegex.exec(html)) !== null) {
-      priceValues.push(parseInt(match[1], 10));
+      // カンマを除去して数値に変換
+      priceValues.push(parseInt(match[1].replace(/,/g, ''), 10));
     }
 
     const minLength = Math.min(goodsNames.length, priceValues.length);

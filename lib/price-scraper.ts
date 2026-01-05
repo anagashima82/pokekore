@@ -24,7 +24,7 @@ const CARDRUSH_BASE_URL = 'https://www.cardrush-pokemon.jp';
 
 /**
  * カードラッシュで検索して価格を取得（複数状態対応）
- * 検索クエリ: "【レアリティ】{カード番号} [シリーズコード]" 形式
+ * 検索クエリ: "【レアリティ】{カード番号}" 形式（シリーズコードなしで広く検索）
  */
 export async function scrapeCardRushPrice(
   seriesCode: string,
@@ -32,19 +32,16 @@ export async function scrapeCardRushPrice(
   rarity?: string
 ): Promise<ScrapedPriceResult | null> {
   try {
-    // シリーズコードは大文字に変換（m1l -> M1L）
-    const upperSeriesCode = seriesCode.toUpperCase();
-
     // 検索クエリを作成
-    // 形式: 【AR】{064/063} [M1L] のような形式で検索
-    // 総数が不明なので、カード番号のみで部分一致検索
+    // カードラッシュではシリーズコードの表記が不安定なので、カード番号で検索
+    // 形式: 【AR】{064/063} のような形式で検索
     let searchQuery: string;
     if (rarity) {
-      // レアリティがある場合: 【AR】{064 [M1L]
-      searchQuery = `【${rarity}】{${cardNumber} [${upperSeriesCode}]`;
+      // レアリティがある場合: 【AR】{064/063}
+      searchQuery = `【${rarity}】{${cardNumber}}`;
     } else {
-      // レアリティがない場合: {064 [M1L]
-      searchQuery = `{${cardNumber} [${upperSeriesCode}]`;
+      // レアリティがない場合: {064/063}
+      searchQuery = `{${cardNumber}}`;
     }
     const searchUrl = `${CARDRUSH_BASE_URL}/product-list?keyword=${encodeURIComponent(searchQuery)}`;
 
@@ -94,7 +91,8 @@ export async function scrapeCardRushPrice(
     // 商品ブロック全体を抽出（goods_nameの開始から2つ目の</span>まで、ネストを考慮）
     // パターン: <span class="goods_name">...内容...</span></span>
     const goodsNameRegex = /<span class="goods_name">([\s\S]*?)<\/span><\/span>/g;
-    const priceRegex = /<span class="figure">(\d{1,6})円<\/span>/g;
+    // 価格にはカンマが含まれる場合がある（例: 2,180円）
+    const priceRegex = /<span class="figure">([\d,]+)円<\/span>/g;
 
     const goodsNames: string[] = [];
     const priceValues: number[] = [];
@@ -107,7 +105,8 @@ export async function scrapeCardRushPrice(
     }
 
     while ((match = priceRegex.exec(html)) !== null) {
-      priceValues.push(parseInt(match[1], 10));
+      // カンマを除去して数値に変換
+      priceValues.push(parseInt(match[1].replace(/,/g, ''), 10));
     }
 
     console.log(`[Scrape] Found ${goodsNames.length} products, ${priceValues.length} prices`);
