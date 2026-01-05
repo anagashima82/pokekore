@@ -12,11 +12,13 @@ interface CardImageModalProps {
 export default function CardImageModal({ card, onClose }: CardImageModalProps) {
   const imageSrc = card.image_path || '/placeholder-card.png';
 
-  // カードラッシュの検索URL生成
+  // カードラッシュの検索URL生成（スクレイピングと同じ形式）
   const getCardRushSearchUrl = useCallback(() => {
-    const searchQuery = `【${card.rarity}】{${card.card_number}}`;
+    const paddedCardNumber = card.card_number.padStart(3, '0');
+    const upperSeriesCode = card.series_code.toUpperCase();
+    const searchQuery = `【${card.rarity}】{${paddedCardNumber}} [${upperSeriesCode}]`;
     return `https://www.cardrush-pokemon.jp/product-list?keyword=${encodeURIComponent(searchQuery)}`;
-  }, [card.rarity, card.card_number]);
+  }, [card.rarity, card.card_number, card.series_code]);
 
   // ESCキーで閉じる
   useEffect(() => {
