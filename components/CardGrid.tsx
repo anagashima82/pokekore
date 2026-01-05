@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import SeriesSection from './SeriesSection';
+import { getSeriesOrder } from '@/lib/constants';
 import type { CardWithOwnership, FilterState } from '@/types';
 
 interface CardGridProps {
@@ -55,8 +56,8 @@ export default function CardGrid({
       );
     }
 
-    // シリーズコードでソート
-    return Array.from(grouped.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+    // シリーズを発売日順でソート（SERIES_ORDER使用）
+    return Array.from(grouped.entries()).sort((a, b) => getSeriesOrder(a[0]) - getSeriesOrder(b[0]));
   }, [cards, filter]);
 
   if (groupedCards.length === 0) {
