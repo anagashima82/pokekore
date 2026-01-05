@@ -151,6 +151,7 @@ export async function scrapeCardRushPrice(
 
 /**
  * 複数カードの価格を取得（レート制限対応）
+ * @deprecated Use scrapeCardRushPrice directly with condition support
  */
 export async function scrapeMultipleCards(
   cards: { id: string; seriesCode: string; cardNumber: string }[],
@@ -164,8 +165,9 @@ export async function scrapeMultipleCards(
       card.cardNumber
     );
 
-    if (result) {
-      results.set(card.id, result.price);
+    if (result && result.prices.length > 0) {
+      // 最初の価格（通常はnormal状態）を返す
+      results.set(card.id, result.prices[0].price);
     }
 
     // レート制限：リクエスト間に遅延を入れる
