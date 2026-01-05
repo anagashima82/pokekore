@@ -173,7 +173,7 @@ export default function CardItem({ card, onToggle, onFavoriteToggle, isUpdating,
         onContextMenu={(e) => e.preventDefault()}
         className={`relative aspect-[63/88] w-full overflow-hidden rounded-lg transition-all duration-200 select-none ${
           isUpdating ? 'opacity-50 cursor-wait' : 'cursor-pointer'
-        } ${shouldGrayscale ? 'grayscale opacity-50' : ''}`}
+        }`}
       >
         {/* カード画像 */}
         <Image
@@ -181,7 +181,7 @@ export default function CardItem({ card, onToggle, onFavoriteToggle, isUpdating,
           alt={card.name}
           fill
           sizes="(max-width: 640px) 33vw, (max-width: 1024px) 25vw, 16vw"
-          className="object-cover pointer-events-none"
+          className={`object-cover pointer-events-none ${shouldGrayscale ? 'grayscale opacity-50' : ''}`}
           unoptimized={imageSrc.startsWith('http')}
           draggable={false}
         />
