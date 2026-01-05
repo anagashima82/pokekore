@@ -70,22 +70,31 @@ export async function GET(request: NextRequest) {
     const cardsToProcess = typedCards.slice(0, MAX_CARDS_PER_RUN);
     const totalCards = typedCards.length;
 
-    const priceRecords: { card_id: string; price: number; source: string; fetched_at: string }[] = [];
+    const priceRecords: { card_id: string; price: number; condition: string; source: string; fetched_at: string; fetched_date: string }[] = [];
     let scrapedCount = 0;
     let failedCount = 0;
+    let totalPriceCount = 0;
+
+    // 今日の日付（YYYY-MM-DD形式）- 同日の重複チェックに使用
+    const today = new Date().toISOString().split('T')[0];
 
     if (PRICE_MODE === 'scrape') {
-      // 実際のスクレイピング
+      // 実際のスクレイピング（複数状態対応）
       for (const card of cardsToProcess) {
         const result = await scrapeCardRushPrice(card.series_code, card.card_number, card.rarity);
 
-        if (result && result.price !== null) {
-          priceRecords.push({
-            card_id: card.id,
-            price: result.price,
-            source: 'cardrush',
-            fetched_at: new Date().toISOString(),
-          });
+        if (result && result.prices.length > 0) {
+          for (const priceData of result.prices) {
+            priceRecords.push({
+              card_id: card.id,
+              price: priceData.price!,
+              condition: priceData.condition,
+              source: 'cardrush',
+              fetched_at: new Date().toISOString(),
+              fetched_date: today,
+            });
+            totalPriceCount++;
+          }
           scrapedCount++;
         } else {
           failedCount++;
@@ -100,11 +109,29 @@ export async function GET(request: NextRequest) {
         priceRecords.push({
           card_id: card.id,
           price: getMockPrice(card.id),
+          condition: 'normal',
           source: 'mock',
           fetched_at: new Date().toISOString(),
+          fetched_date: today,
         });
+        totalPriceCount++;
       }
       scrapedCount = typedCards.length;
+    }
+
+    // 同日・同カード・同状態の古いデータを削除してから挿入（upsert相当）
+    // まず今日のデータで対象カードのものを削除
+    const cardIds = [...new Set(priceRecords.map(r => r.card_id))];
+    if (cardIds.length > 0) {
+      const { error: deleteError } = await supabase
+        .from('card_prices')
+        .delete()
+        .eq('fetched_date', today)
+        .in('card_id', cardIds);
+
+      if (deleteError) {
+        console.error('Delete old prices error:', deleteError);
+      }
     }
 
     // バッチインサート（500件ずつ）
@@ -126,14 +153,15 @@ export async function GET(request: NextRequest) {
     }
 
     const resultMessage = PRICE_MODE === 'scrape'
-      ? `${insertedCount}件の価格を取得しました（成功: ${scrapedCount}件、失敗: ${failedCount}件）\n処理: ${cardsToProcess.length}/${totalCards}件\nモード: ${PRICE_MODE}`
+      ? `${insertedCount}件の価格を取得しました\nカード: ${scrapedCount}件成功、${failedCount}件失敗\n価格レコード: ${totalPriceCount}件（状態別）\n処理: ${cardsToProcess.length}/${totalCards}件\nモード: ${PRICE_MODE}`
       : `${insertedCount}件の価格を取得しました\nモード: ${PRICE_MODE}`;
     await sendSlackNotification(resultMessage);
 
     return NextResponse.json({
       success: true,
       mode: PRICE_MODE,
-      message: `Fetched prices for ${insertedCount} cards (scraped: ${scrapedCount}, failed: ${failedCount})`,
+      message: `Fetched ${insertedCount} price records for ${scrapedCount} cards (failed: ${failedCount})`,
+      totalPrices: totalPriceCount,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {

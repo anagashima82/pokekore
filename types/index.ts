@@ -79,6 +79,7 @@ export interface CardPrice {
   id: string;
   card_id: string;
   price: number;
+  condition: string; // 'normal' | 'A-' | 'B' など
   source: string;
   fetched_at: string;
 }

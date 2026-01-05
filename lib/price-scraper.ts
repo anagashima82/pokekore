@@ -9,21 +9,28 @@ interface ScrapedPrice {
   cardNumber: string;
   seriesCode: string;
   price: number | null;
+  condition: string; // 'normal' | 'A-' | 'B' など
   source: string;
+}
+
+interface ScrapedPriceResult {
+  cardNumber: string;
+  seriesCode: string;
+  prices: ScrapedPrice[];
 }
 
 // カードラッシュの検索URL
 const CARDRUSH_BASE_URL = 'https://www.cardrush-pokemon.jp';
 
 /**
- * カードラッシュで検索して価格を取得
+ * カードラッシュで検索して価格を取得（複数状態対応）
  * 検索クエリ: "【レアリティ】{カード番号} [シリーズコード]" 形式
  */
 export async function scrapeCardRushPrice(
   seriesCode: string,
   cardNumber: string,
   rarity?: string
-): Promise<ScrapedPrice | null> {
+): Promise<ScrapedPriceResult | null> {
   try {
     // シリーズコードは大文字に変換（m1l -> M1L）
     const upperSeriesCode = seriesCode.toUpperCase();
@@ -60,11 +67,7 @@ export async function scrapeCardRushPrice(
     console.log(`[Scrape] HTML length: ${html.length} chars`);
 
     // カード番号でマッチするか確認
-    // 形式1: {001/064} [SV7a] - シリーズコードがブラケットで続く場合
-    // 形式2: {064/063} - シリーズコードがタイトルに含まれない場合
     const numWithoutLeadingZeros = cardNumber.replace(/^0+/, '') || '0';
-
-    // まずカード番号だけでマッチを確認
     const cardNumberPattern = new RegExp(
       `\\{0*${numWithoutLeadingZeros}/\\d+\\}`,
       'i'
@@ -74,36 +77,69 @@ export async function scrapeCardRushPrice(
     console.log(`[Scrape] Card pattern: ${cardNumberPattern}, Found: ${cardFound}`);
 
     if (!cardFound) {
-      // カードが見つからない場合 - HTMLの一部を出力してデバッグ
-      const snippet = html.substring(0, 500);
-      console.log(`[Scrape] Card not found. HTML snippet: ${snippet}`);
+      console.log(`[Scrape] Card not found.`);
       return {
         cardNumber,
         seriesCode,
-        price: null,
-        source: 'cardrush',
+        prices: [],
       };
     }
 
-    // 価格を抽出
-    // 形式: <span class="figure">380円</span><span class="tax_label list_tax_label">(税込)</span>
-    const priceMatch = html.match(/<span class="figure">(\d{1,6})円<\/span>/);
+    // 商品名と価格のペアを抽出
+    // 形式: <span class="goods_name">〔状態A-〕ダストダス<span ...>【AR】{075/066}</span></span>
+    //       ...
+    //       <span class="figure">350円</span>
+    const prices: ScrapedPrice[] = [];
 
-    if (priceMatch) {
-      const price = parseInt(priceMatch[1], 10);
-      return {
+    // 商品ブロックを抽出（goods_nameから次のgoods_nameまで、または価格まで）
+    // より正確にパースするため、goods_nameとfigureを順番に抽出
+    const goodsNameRegex = /<span class="goods_name">(.*?)<\/span>/gs;
+    const priceRegex = /<span class="figure">(\d{1,6})円<\/span>/g;
+
+    const goodsNames: string[] = [];
+    const priceValues: number[] = [];
+
+    let match;
+    while ((match = goodsNameRegex.exec(html)) !== null) {
+      goodsNames.push(match[1]);
+    }
+
+    while ((match = priceRegex.exec(html)) !== null) {
+      priceValues.push(parseInt(match[1], 10));
+    }
+
+    console.log(`[Scrape] Found ${goodsNames.length} products, ${priceValues.length} prices`);
+
+    // 商品名と価格を対応付け
+    const minLength = Math.min(goodsNames.length, priceValues.length);
+    for (let i = 0; i < minLength; i++) {
+      const goodsName = goodsNames[i];
+      const price = priceValues[i];
+
+      // このカードに関連する商品かチェック
+      if (!cardNumberPattern.test(goodsName)) {
+        continue;
+      }
+
+      // 状態を抽出（「〔状態A-〕」「〔状態B〕」など）
+      const conditionMatch = goodsName.match(/〔状態([^〕]+)〕/);
+      const condition = conditionMatch ? conditionMatch[1] : 'normal';
+
+      prices.push({
         cardNumber,
         seriesCode,
         price,
+        condition,
         source: 'cardrush',
-      };
+      });
     }
+
+    console.log(`[Scrape] Extracted ${prices.length} prices for card ${cardNumber}`);
 
     return {
       cardNumber,
       seriesCode,
-      price: null,
-      source: 'cardrush',
+      prices,
     };
   } catch (error) {
     console.error('Error scraping CardRush:', error);
