@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
 
 interface SplashScreenProps {
   onFinish: () => void;
@@ -33,20 +32,16 @@ export default function SplashScreen({
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-white transition-opacity duration-500 ${
+      className={`fixed inset-0 z-50 transition-opacity duration-500 ${
         fadeOut ? 'opacity-0' : 'opacity-100'
       }`}
     >
-      <div className="relative w-full h-full flex items-center justify-center">
-        <Image
-          src="/splash.gif"
-          alt="ポケコレ"
-          fill
-          className="object-contain"
-          priority
-          unoptimized // GIFアニメーションを有効にするため
-        />
-      </div>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/splash.gif"
+        alt="ポケコレ"
+        className="w-full h-full object-cover"
+      />
     </div>
   );
 }
