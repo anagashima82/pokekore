@@ -85,25 +85,25 @@ async function scrapeCardRushPrice(
     const totalCards = SERIES_TOTAL_CARDS[lowerSeriesCode];
 
     // 検索クエリを作成
-    // 形式: 【AR】{079/078} [SV1S] または 【AR】{232/SV-P}（プロモ）
+    // 形式: AR 079/078 SV1S または AR 232/SV-P（プロモ）
     let searchQuery: string;
     if (upperSeriesCode === 'PROMO' || totalCards === 'SV-P') {
-      // プロモカード: 【AR】{232/SV-P}
-      searchQuery = rarity ? `【${rarity}】{${paddedCardNumber}/SV-P}` : `{${paddedCardNumber}/SV-P}`;
+      // プロモカード: AR 232/SV-P
+      searchQuery = rarity ? `${rarity} ${paddedCardNumber}/SV-P` : `${paddedCardNumber}/SV-P`;
     } else if (totalCards !== undefined && rarity) {
-      // 通常シリーズ: 【AR】{079/078} [SV1S]
+      // 通常シリーズ: AR 079/078 SV1S
       const paddedTotal = String(totalCards).padStart(3, '0');
-      searchQuery = `【${rarity}】{${paddedCardNumber}/${paddedTotal}} [${upperSeriesCode}]`;
+      searchQuery = `${rarity} ${paddedCardNumber}/${paddedTotal} ${upperSeriesCode}`;
     } else if (totalCards !== undefined) {
-      // レアリティなし: {079/078} [SV1S]
+      // レアリティなし: 079/078 SV1S
       const paddedTotal = String(totalCards).padStart(3, '0');
-      searchQuery = `{${paddedCardNumber}/${paddedTotal}} [${upperSeriesCode}]`;
+      searchQuery = `${paddedCardNumber}/${paddedTotal} ${upperSeriesCode}`;
     } else if (rarity) {
-      // 未知のシリーズ（レアリティあり）: 旧形式
-      searchQuery = `【${rarity}】{${paddedCardNumber}} [${upperSeriesCode}]`;
+      // 未知のシリーズ（レアリティあり）
+      searchQuery = `${rarity} ${paddedCardNumber} ${upperSeriesCode}`;
     } else {
-      // 未知のシリーズ（レアリティなし）: 旧形式
-      searchQuery = `{${paddedCardNumber}} [${upperSeriesCode}]`;
+      // 未知のシリーズ（レアリティなし）
+      searchQuery = `${paddedCardNumber} ${upperSeriesCode}`;
     }
 
     const searchUrl = `${CARDRUSH_BASE_URL}/product-list?keyword=${encodeURIComponent(searchQuery)}`;

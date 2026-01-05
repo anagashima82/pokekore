@@ -14,7 +14,7 @@ export default function CardImageModal({ card, onClose }: CardImageModalProps) {
   const imageSrc = card.image_path || '/placeholder-card.png';
 
   // カードラッシュの検索URL生成
-  // 形式: 【AR】{079/078} [SV1S] または 【AR】{232/SV-P}（プロモ）
+  // 形式: AR 079/078 SV1S または AR 232/SV-P（プロモ）
   const getCardRushSearchUrl = useCallback(() => {
     const paddedCardNumber = card.card_number.padStart(3, '0');
     const upperSeriesCode = card.series_code.toUpperCase();
@@ -25,15 +25,15 @@ export default function CardImageModal({ card, onClose }: CardImageModalProps) {
 
     let searchQuery: string;
     if (upperSeriesCode === 'PROMO' || totalCards === 'SV-P') {
-      // プロモカード: 【AR】{232/SV-P}
-      searchQuery = `【${card.rarity}】{${paddedCardNumber}/SV-P}`;
+      // プロモカード: AR 232/SV-P
+      searchQuery = `${card.rarity} ${paddedCardNumber}/SV-P`;
     } else if (totalCards !== undefined) {
-      // 通常シリーズ: 【AR】{079/078} [SV1S]
+      // 通常シリーズ: AR 079/078 SV1S
       const paddedTotal = String(totalCards).padStart(3, '0');
-      searchQuery = `【${card.rarity}】{${paddedCardNumber}/${paddedTotal}} [${upperSeriesCode}]`;
+      searchQuery = `${card.rarity} ${paddedCardNumber}/${paddedTotal} ${upperSeriesCode}`;
     } else {
-      // 未知のシリーズ: 旧形式を使用
-      searchQuery = `【${card.rarity}】{${paddedCardNumber}} [${upperSeriesCode}]`;
+      // 未知のシリーズ
+      searchQuery = `${card.rarity} ${paddedCardNumber} ${upperSeriesCode}`;
     }
     return `https://www.cardrush-pokemon.jp/product-list?keyword=${encodeURIComponent(searchQuery)}`;
   }, [card.rarity, card.card_number, card.series_code]);
