@@ -55,8 +55,11 @@ async function scrapeCardRushPrice(
     const upperSeriesCode = seriesCode.toUpperCase();
 
     // 検索クエリ: 【AR】{079} [SV1S] 形式
+    // promoカードの場合はシリーズコードを付けない（カードラッシュの形式に合わせる）
     let searchQuery: string;
-    if (rarity) {
+    if (upperSeriesCode === 'PROMO') {
+      searchQuery = rarity ? `【${rarity}】{${paddedCardNumber}}` : `{${paddedCardNumber}}`;
+    } else if (rarity) {
       searchQuery = `【${rarity}】{${paddedCardNumber}} [${upperSeriesCode}]`;
     } else {
       searchQuery = `{${paddedCardNumber}} [${upperSeriesCode}]`;

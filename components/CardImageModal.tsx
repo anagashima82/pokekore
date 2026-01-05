@@ -16,7 +16,14 @@ export default function CardImageModal({ card, onClose }: CardImageModalProps) {
   const getCardRushSearchUrl = useCallback(() => {
     const paddedCardNumber = card.card_number.padStart(3, '0');
     const upperSeriesCode = card.series_code.toUpperCase();
-    const searchQuery = `【${card.rarity}】{${paddedCardNumber}} [${upperSeriesCode}]`;
+
+    // promoカードの場合はシリーズコードを付けない（カードラッシュの形式に合わせる）
+    let searchQuery: string;
+    if (upperSeriesCode === 'PROMO') {
+      searchQuery = `【${card.rarity}】{${paddedCardNumber}}`;
+    } else {
+      searchQuery = `【${card.rarity}】{${paddedCardNumber}} [${upperSeriesCode}]`;
+    }
     return `https://www.cardrush-pokemon.jp/product-list?keyword=${encodeURIComponent(searchQuery)}`;
   }, [card.rarity, card.card_number, card.series_code]);
 
