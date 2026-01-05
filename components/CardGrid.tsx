@@ -21,6 +21,19 @@ export default function CardGrid({
   onFavoriteToggle,
   updatingCardIds,
 }: CardGridProps) {
+  // シリーズごとの総カード数と所持数（フィルタ前）
+  const seriesStats = useMemo(() => {
+    const stats = new Map<string, { total: number; owned: number }>();
+    for (const card of cards) {
+      const existing = stats.get(card.series_code) || { total: 0, owned: 0 };
+      stats.set(card.series_code, {
+        total: existing.total + 1,
+        owned: existing.owned + (card.owned ? 1 : 0),
+      });
+    }
+    return stats;
+  }, [cards]);
+
   // フィルタリングとグループ化
   const groupedCards = useMemo(() => {
     // フィルタリング
@@ -94,17 +107,22 @@ export default function CardGrid({
   return (
     <>
       <div className="pb-4">
-        {groupedCards.map(([seriesCode, seriesCards]) => (
-          <SeriesSection
-            key={seriesCode}
-            seriesCode={seriesCode}
-            cards={seriesCards}
-            onToggle={onToggle}
-            onFavoriteToggle={onFavoriteToggle}
-            updatingCardIds={updatingCardIds}
-            showGrayscale={filter.showGrayscale}
-          />
-        ))}
+        {groupedCards.map(([seriesCode, seriesCards]) => {
+          const stats = seriesStats.get(seriesCode);
+          return (
+            <SeriesSection
+              key={seriesCode}
+              seriesCode={seriesCode}
+              cards={seriesCards}
+              totalSeriesCards={stats?.total ?? seriesCards.length}
+              ownedSeriesCards={stats?.owned ?? 0}
+              onToggle={onToggle}
+              onFavoriteToggle={onFavoriteToggle}
+              updatingCardIds={updatingCardIds}
+              showGrayscale={filter.showGrayscale}
+            />
+          );
+        })}
       </div>
       <ScrollScrubber seriesCodes={seriesCodes} />
     </>

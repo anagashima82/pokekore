@@ -6,6 +6,8 @@ import type { CardWithOwnership } from '@/types';
 interface SeriesSectionProps {
   seriesCode: string;
   cards: CardWithOwnership[];
+  totalSeriesCards: number;
+  ownedSeriesCards: number;
   onToggle: (cardId: string) => void;
   onFavoriteToggle?: (cardId: string) => void;
   updatingCardIds: Set<string>;
@@ -15,14 +17,14 @@ interface SeriesSectionProps {
 export default function SeriesSection({
   seriesCode,
   cards,
+  totalSeriesCards,
+  ownedSeriesCards,
   onToggle,
   onFavoriteToggle,
   updatingCardIds,
   showGrayscale = true,
 }: SeriesSectionProps) {
-  const ownedCount = cards.filter((c) => c.owned).length;
-  const totalCount = cards.length;
-  const percentage = totalCount > 0 ? Math.round((ownedCount / totalCount) * 100) : 0;
+  const percentage = totalSeriesCards > 0 ? Math.round((ownedSeriesCards / totalSeriesCards) * 100) : 0;
 
   return (
     <section className="mb-6" data-series={seriesCode}>
@@ -31,7 +33,7 @@ export default function SeriesSection({
         <h2 className="font-bold text-gray-800">{seriesCode}</h2>
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-600">
-            {ownedCount} / {totalCount}
+            {ownedSeriesCards} / {totalSeriesCards}
           </span>
           <div className="w-24 h-2 bg-gray-300 rounded-full overflow-hidden">
             <div
