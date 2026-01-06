@@ -105,24 +105,28 @@ export default function CameraScanner({ cards, onClose, onCardFound }: CameraSca
       canvas.height = video.videoHeight;
       ctx.drawImage(video, 0, 0);
 
-      // 下部の番号エリアだけを切り出し（パフォーマンス向上）
-      const scanHeight = Math.floor(canvas.height * 0.25);
+      // カード左下の番号エリアだけを切り出し
+      // ポケカの番号は左下にあるので、左下25%x15%の領域をスキャン
+      const scanWidth = Math.floor(canvas.width * 0.4);  // 左側40%
+      const scanHeight = Math.floor(canvas.height * 0.12); // 下部12%
+      const scanX = 0;
       const scanY = canvas.height - scanHeight;
+
       const scanCanvas = document.createElement('canvas');
-      scanCanvas.width = canvas.width;
+      scanCanvas.width = scanWidth;
       scanCanvas.height = scanHeight;
       const scanCtx = scanCanvas.getContext('2d');
       if (!scanCtx) return;
 
-      scanCtx.drawImage(canvas, 0, scanY, canvas.width, scanHeight, 0, 0, canvas.width, scanHeight);
+      scanCtx.drawImage(canvas, scanX, scanY, scanWidth, scanHeight, 0, 0, scanWidth, scanHeight);
 
-      // グレースケール化とコントラスト強調
+      // 画像前処理: コントラスト強調と二値化
       const imageData = scanCtx.getImageData(0, 0, scanCanvas.width, scanCanvas.height);
       const data = imageData.data;
       for (let i = 0; i < data.length; i += 4) {
         const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-        // 二値化（閾値128）
-        const bw = gray > 128 ? 255 : 0;
+        // 適応的二値化（閾値を少し下げて白文字を拾いやすく）
+        const bw = gray > 100 ? 255 : 0;
         data[i] = bw;
         data[i + 1] = bw;
         data[i + 2] = bw;
@@ -273,24 +277,31 @@ export default function CameraScanner({ cards, onClose, onCardFound }: CameraSca
       {/* スキャン用キャンバス（非表示） */}
       <canvas ref={canvasRef} className="hidden" />
 
-      {/* スキャンフレーム */}
+      {/* スキャンフレーム - 左下のカード番号エリアをハイライト */}
       <div className="absolute inset-0 pointer-events-none">
-        {/* 上部暗幕 */}
-        <div className="absolute top-0 left-0 right-0 h-[20%] bg-black/50" />
-        {/* 下部暗幕 */}
-        <div className="absolute bottom-0 left-0 right-0 h-[20%] bg-black/50" />
-        {/* 左側暗幕 */}
-        <div className="absolute top-[20%] left-0 w-[10%] h-[60%] bg-black/50" />
-        {/* 右側暗幕 */}
-        <div className="absolute top-[20%] right-0 w-[10%] h-[60%] bg-black/50" />
+        {/* 暗幕で左下以外を覆う */}
+        {/* 上部 88% */}
+        <div className="absolute top-0 left-0 right-0 h-[88%] bg-black/40" />
+        {/* 下部右側 60% */}
+        <div className="absolute bottom-0 right-0 w-[60%] h-[12%] bg-black/40" />
 
-        {/* スキャンエリア枠 */}
-        <div className="absolute top-[20%] left-[10%] right-[10%] h-[60%] border-2 border-orange-500 rounded-xl">
+        {/* スキャンエリア枠 - 左下40% x 12% */}
+        <div className="absolute bottom-0 left-0 w-[40%] h-[12%] border-2 border-orange-500">
           {/* コーナーマーカー */}
-          <div className="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-orange-500 rounded-tl-lg" />
-          <div className="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-orange-500 rounded-tr-lg" />
-          <div className="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-orange-500 rounded-bl-lg" />
-          <div className="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-orange-500 rounded-br-lg" />
+          <div className="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-orange-500" />
+          <div className="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-orange-500" />
+          <div className="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-orange-500" />
+          <div className="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-orange-500" />
+
+          {/* スキャンライン */}
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute w-full h-0.5 bg-orange-500/80 animate-pulse top-1/2" />
+          </div>
+        </div>
+
+        {/* ガイドテキスト */}
+        <div className="absolute bottom-[14%] left-4 text-white text-sm bg-black/60 px-3 py-1 rounded-full">
+          カード番号を枠内に合わせてください
         </div>
       </div>
 
