@@ -105,12 +105,12 @@ export default function CameraScanner({ cards, onClose, onCardFound }: CameraSca
       canvas.height = video.videoHeight;
       ctx.drawImage(video, 0, 0);
 
-      // カード左下の番号エリアだけを切り出し
-      // ポケカの番号は左下にあるので、左下25%x15%の領域をスキャン
-      const scanWidth = Math.floor(canvas.width * 0.4);  // 左側40%
-      const scanHeight = Math.floor(canvas.height * 0.12); // 下部12%
-      const scanX = 0;
-      const scanY = canvas.height - scanHeight;
+      // 画面中央のスキャンエリアを切り出し
+      // カード番号部分を枠内に合わせてもらう
+      const scanWidth = Math.floor(canvas.width * 0.8);  // 幅80%
+      const scanHeight = Math.floor(canvas.height * 0.15); // 高さ15%
+      const scanX = Math.floor((canvas.width - scanWidth) / 2);  // 中央
+      const scanY = Math.floor((canvas.height - scanHeight) / 2); // 中央
 
       const scanCanvas = document.createElement('canvas');
       scanCanvas.width = scanWidth;
@@ -284,30 +284,34 @@ export default function CameraScanner({ cards, onClose, onCardFound }: CameraSca
       {/* スキャン用キャンバス（非表示） */}
       <canvas ref={canvasRef} className="hidden" />
 
-      {/* スキャンフレーム - 左下のカード番号エリアをハイライト */}
+      {/* スキャンフレーム - 画面中央のスキャンエリア */}
       <div className="absolute inset-0 pointer-events-none">
-        {/* 暗幕で左下以外を覆う */}
-        {/* 上部 88% */}
-        <div className="absolute top-0 left-0 right-0 h-[88%] bg-black/40" />
-        {/* 下部右側 60% */}
-        <div className="absolute bottom-0 right-0 w-[60%] h-[12%] bg-black/40" />
+        {/* 暗幕で中央以外を覆う */}
+        {/* 上部 */}
+        <div className="absolute top-0 left-0 right-0 h-[42.5%] bg-black/40" />
+        {/* 下部 */}
+        <div className="absolute bottom-0 left-0 right-0 h-[42.5%] bg-black/40" />
+        {/* 左側 */}
+        <div className="absolute top-[42.5%] left-0 w-[10%] h-[15%] bg-black/40" />
+        {/* 右側 */}
+        <div className="absolute top-[42.5%] right-0 w-[10%] h-[15%] bg-black/40" />
 
-        {/* スキャンエリア枠 - 左下40% x 12% */}
-        <div className="absolute bottom-0 left-0 w-[40%] h-[12%] border-2 border-orange-500">
+        {/* スキャンエリア枠 - 中央80% x 15% */}
+        <div className="absolute top-[42.5%] left-[10%] w-[80%] h-[15%] border-2 border-orange-500 rounded-lg">
           {/* コーナーマーカー */}
-          <div className="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-orange-500" />
-          <div className="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-orange-500" />
-          <div className="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-orange-500" />
-          <div className="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-orange-500" />
+          <div className="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-orange-500 rounded-tl-lg" />
+          <div className="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-orange-500 rounded-tr-lg" />
+          <div className="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-orange-500 rounded-bl-lg" />
+          <div className="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-orange-500 rounded-br-lg" />
 
           {/* スキャンライン */}
-          <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute inset-0 overflow-hidden rounded-lg">
             <div className="absolute w-full h-0.5 bg-orange-500/80 animate-pulse top-1/2" />
           </div>
         </div>
 
         {/* ガイドテキスト */}
-        <div className="absolute bottom-[14%] left-4 text-white text-sm bg-black/60 px-3 py-1 rounded-full">
+        <div className="absolute top-[59%] left-1/2 -translate-x-1/2 text-white text-sm bg-black/60 px-3 py-1 rounded-full">
           カード番号を枠内に合わせてください
         </div>
       </div>
