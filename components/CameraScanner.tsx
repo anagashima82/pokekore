@@ -120,13 +120,14 @@ export default function CameraScanner({ cards, onClose, onCardFound }: CameraSca
 
       scanCtx.drawImage(canvas, scanX, scanY, scanWidth, scanHeight, 0, 0, scanWidth, scanHeight);
 
-      // 画像前処理: コントラスト強調と二値化
+      // 画像前処理: 反転＋コントラスト強調（白背景に黒文字にする）
       const imageData = scanCtx.getImageData(0, 0, scanCanvas.width, scanCanvas.height);
       const data = imageData.data;
       for (let i = 0; i < data.length; i += 4) {
         const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-        // 適応的二値化（閾値を少し下げて白文字を拾いやすく）
-        const bw = gray > 100 ? 255 : 0;
+        // 閾値調整: カードの番号は比較的明るい色が多いので閾値を上げる
+        // 白文字（明るい）を黒に、背景（暗い）を白に反転
+        const bw = gray > 150 ? 0 : 255;
         data[i] = bw;
         data[i + 1] = bw;
         data[i + 2] = bw;
@@ -137,9 +138,13 @@ export default function CameraScanner({ cards, onClose, onCardFound }: CameraSca
       const result = await workerRef.current.recognize(scanCanvas);
       const text = result.data.text;
 
+      // デバッグ: OCR結果をコンソールに出力
+      console.log('OCR Result:', text, 'Confidence:', result.data.confidence);
+
       // カード番号を解析
       const parsed = parseCardNumber(text);
       if (parsed) {
+        console.log('Parsed:', parsed);
         const card = findCard(parsed.cardNumber, parsed.seriesCode);
         if (card) {
           setDetectedCard({
@@ -149,10 +154,12 @@ export default function CameraScanner({ cards, onClose, onCardFound }: CameraSca
           setScanStatus(`検出: ${card.name}`);
           onCardFound?.(card);
         } else {
-          setScanStatus(`番号検出: ${parsed.cardNumber} (該当なし)`);
+          setScanStatus(`番号検出: ${parsed.cardNumber}/${parsed.totalCards || '?'} (該当なし)`);
         }
       } else {
-        setScanStatus('カードを探しています...');
+        // OCRテキストの一部を表示（デバッグ用）
+        const shortText = text.replace(/\s+/g, ' ').trim().slice(0, 30);
+        setScanStatus(shortText ? `読取中: ${shortText}...` : 'カードを探しています...');
       }
     } catch (err) {
       console.error('OCR scan error:', err);
