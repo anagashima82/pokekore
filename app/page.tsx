@@ -1,10 +1,16 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import Header from '@/components/Header';
 import FilterBar from '@/components/FilterBar';
 import CardGrid from '@/components/CardGrid';
 import { usePreloadedData } from '@/components/AppShell';
+
+// カメラスキャナーは動的インポート（SSR無効）
+const CameraScanner = dynamic(() => import('@/components/CameraScanner'), {
+  ssr: false,
+});
 import { toggleCollection, toggleFavorite, getCollectionStats } from '@/lib/api';
 import type {
   UserCollection,
@@ -37,6 +43,7 @@ export default function Home() {
     showGrayscale: true,
   });
   const [updatingCardIds, setUpdatingCardIds] = useState<Set<string>>(new Set());
+  const [showCameraScanner, setShowCameraScanner] = useState(false);
 
   // プリロードデータが更新されたら同期
   if (preloadedCollections !== collections && preloadedCollections.size > 0 && collections.size === 0) {
@@ -257,7 +264,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header stats={stats} />
+      <Header stats={stats} onCameraOpen={() => setShowCameraScanner(true)} />
       <FilterBar
         series={series}
         rarities={rarities}
@@ -273,6 +280,14 @@ export default function Home() {
           updatingCardIds={updatingCardIds}
         />
       </main>
+
+      {/* カメラスキャナーモーダル */}
+      {showCameraScanner && (
+        <CameraScanner
+          cards={cardsWithOwnership}
+          onClose={() => setShowCameraScanner(false)}
+        />
+      )}
     </div>
   );
 }
