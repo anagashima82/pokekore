@@ -189,20 +189,22 @@ export default function CardItem({ card, onToggle, onFavoriteToggle, isUpdating,
         {/* 未所持アイコン */}
         {!card.owned && !isLongPressing && (
           <div className={`absolute inset-0 flex items-center justify-center ${shouldGrayscale ? 'bg-black/30' : ''}`}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2}
-              stroke={shouldGrayscale ? 'white' : 'rgba(255,255,255,0.8)'}
-              className="h-8 w-8 drop-shadow-lg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 4.5v15m7.5-7.5h-15"
-              />
-            </svg>
+            <div className="relative flex items-center justify-center w-10 h-10 rounded-full bg-white/90 shadow-lg">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2.5}
+                stroke="#7ab8b8"
+                className="h-6 w-6"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 4.5v15m7.5-7.5h-15"
+                />
+              </svg>
+            </div>
           </div>
         )}
 
