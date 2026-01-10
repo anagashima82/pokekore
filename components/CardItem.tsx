@@ -195,7 +195,7 @@ export default function CardItem({ card, onToggle, onFavoriteToggle, isUpdating,
                 fill="none"
                 viewBox="0 0 24 24"
                 strokeWidth={2.5}
-                stroke="#7ab8b8"
+                stroke="#4a4a4a"
                 className="h-6 w-6"
               >
                 <path
