@@ -16,13 +16,13 @@ export default function FilterBar({
   onFilterChange,
 }: FilterBarProps) {
   return (
-    <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3 shadow-sm">
+    <div className="sticky top-0 z-10 bg-white border-b border-[#e8eaeb] px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
       <div className="flex flex-wrap items-center gap-3">
         {/* シリーズ選択 */}
         <select
           value={filter.series}
           onChange={(e) => onFilterChange({ ...filter, series: e.target.value })}
-          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="rounded-[12px] border border-[#e8eaeb] bg-white px-3 py-2 text-sm text-[#585e5f] focus:border-[#bbebeb] focus:outline-none focus:ring-[4px] focus:ring-[rgba(187,235,235,0.55)] transition-all duration-200"
         >
           <option value="">全シリーズ</option>
           {series.map((s) => (
@@ -36,7 +36,7 @@ export default function FilterBar({
         <select
           value={filter.rarity}
           onChange={(e) => onFilterChange({ ...filter, rarity: e.target.value })}
-          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="rounded-[12px] border border-[#e8eaeb] bg-white px-3 py-2 text-sm text-[#585e5f] focus:border-[#bbebeb] focus:outline-none focus:ring-[4px] focus:ring-[rgba(187,235,235,0.55)] transition-all duration-200"
         >
           <option value="">全レアリティ</option>
           {rarities.map((r) => (
@@ -47,33 +47,33 @@ export default function FilterBar({
         </select>
 
         {/* 所持状態ボタン */}
-        <div className="flex rounded-lg border border-gray-300 overflow-hidden">
+        <div className="flex rounded-[12px] border border-[#e8eaeb] overflow-hidden">
           <button
             onClick={() => onFilterChange({ ...filter, owned: 'all' })}
-            className={`px-3 py-2 text-sm transition-colors ${
+            className={`px-3 py-2 text-sm transition-all duration-200 ${
               filter.owned === 'all'
-                ? 'bg-blue-500 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-50'
+                ? 'bg-[#bbebeb] text-white'
+                : 'bg-white text-[#585e5f] hover:bg-[#f6f7f8]'
             }`}
           >
             全て
           </button>
           <button
             onClick={() => onFilterChange({ ...filter, owned: 'owned' })}
-            className={`px-3 py-2 text-sm border-l border-gray-300 transition-colors ${
+            className={`px-3 py-2 text-sm border-l border-[#e8eaeb] transition-all duration-200 ${
               filter.owned === 'owned'
-                ? 'bg-blue-500 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-50'
+                ? 'bg-[#bbebeb] text-white'
+                : 'bg-white text-[#585e5f] hover:bg-[#f6f7f8]'
             }`}
           >
             所持
           </button>
           <button
             onClick={() => onFilterChange({ ...filter, owned: 'not_owned' })}
-            className={`px-3 py-2 text-sm border-l border-gray-300 transition-colors ${
+            className={`px-3 py-2 text-sm border-l border-[#e8eaeb] transition-all duration-200 ${
               filter.owned === 'not_owned'
-                ? 'bg-blue-500 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-50'
+                ? 'bg-[#bbebeb] text-white'
+                : 'bg-white text-[#585e5f] hover:bg-[#f6f7f8]'
             }`}
           >
             未所持
@@ -82,10 +82,10 @@ export default function FilterBar({
             onClick={() => onFilterChange({ ...filter, owned: 'favorite' })}
             title="お気に入り"
             aria-label="お気に入り"
-            className={`px-3 py-2 text-sm border-l border-gray-300 transition-colors ${
+            className={`px-3 py-2 text-sm border-l border-[#e8eaeb] transition-all duration-200 ${
               filter.owned === 'favorite'
-                ? 'bg-red-500 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-50'
+                ? 'bg-[#f5a3a3] text-white'
+                : 'bg-white text-[#585e5f] hover:bg-[#f6f7f8]'
             }`}
           >
             <svg
@@ -111,9 +111,9 @@ export default function FilterBar({
             type="checkbox"
             checked={filter.showGrayscale}
             onChange={(e) => onFilterChange({ ...filter, showGrayscale: e.target.checked })}
-            className="h-4 w-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
+            className="h-4 w-4 rounded border-[#e8eaeb] text-[#bbebeb] focus:ring-[#bbebeb] focus:ring-offset-0"
           />
-          <span className="text-sm text-gray-700">未所持をグレー表示</span>
+          <span className="text-sm text-[#585e5f]">未所持をグレー表示</span>
         </label>
       </div>
     </div>

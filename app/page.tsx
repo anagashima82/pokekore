@@ -230,12 +230,12 @@ export default function Home() {
   // ローディング表示（スプラッシュ後に2回目以降のアクセスで表示）
   if (!isLoaded) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-[#f6f7f8]">
         <Header />
         <div className="flex items-center justify-center py-20">
           <div className="flex flex-col items-center gap-4">
-            <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
-            <p className="text-gray-600">読み込み中...</p>
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-[#bbebeb] border-t-transparent" />
+            <p className="text-[#585e5f]">読み込み中...</p>
           </div>
         </div>
       </div>
@@ -245,7 +245,7 @@ export default function Home() {
   // エラー表示
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-[#f6f7f8]">
         <Header />
         <div className="flex items-center justify-center py-20">
           <div className="flex flex-col items-center gap-4 text-center px-4">
@@ -255,7 +255,7 @@ export default function Home() {
               viewBox="0 0 24 24"
               strokeWidth={1.5}
               stroke="currentColor"
-              className="w-16 h-16 text-red-500"
+              className="w-16 h-16 text-[#f5a3a3]"
             >
               <path
                 strokeLinecap="round"
@@ -263,11 +263,11 @@ export default function Home() {
                 d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z"
               />
             </svg>
-            <p className="text-lg font-medium text-gray-800">{error}</p>
+            <p className="text-lg font-medium text-[#585e5f]">{error}</p>
             <button
               type="button"
               onClick={refetch}
-              className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              className="mt-2 px-6 py-2 bg-[#bbebeb] text-white rounded-[999px] hover:bg-[#a8dede] active:bg-[#95d1d1] transition-all duration-200"
             >
               再試行
             </button>
@@ -278,7 +278,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-[60px]">
+    <div className="min-h-screen bg-[#f6f7f8] pb-[60px]">
       <Header stats={stats} onCameraOpen={() => setShowCameraScanner(true)} />
       <FilterBar
         series={series}

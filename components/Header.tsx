@@ -21,28 +21,19 @@ export default function Header({ stats, onCameraOpen }: HeaderProps) {
   };
 
   return (
-    <header className="relative shadow-md overflow-hidden">
-      {/* バナー背景画像 */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/banar.jpg"
-        alt=""
-        className="absolute inset-0 w-full h-full object-cover"
-      />
-
-      {/* オーバーレイコンテンツ */}
-      <div className="relative z-10 px-4 py-3">
+    <header className="bg-white border-b border-[#e8eaeb] shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+      <div className="px-4 py-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-orange-600 bg-white/80 px-3 py-1 rounded-lg shadow-sm font-cute">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-[#7ab8b8] tracking-tight">
               ポケコレ
             </h1>
             {stats && (
-              <div className="flex items-center gap-2 text-sm bg-orange-500 text-white rounded-full px-3 py-1 shadow-sm">
+              <div className="flex items-center gap-2 text-sm bg-[#e8f7f7] text-[#5fa3a3] rounded-full px-3 py-1">
                 <span>
                   {stats.owned} / {stats.total}
                 </span>
-                <span className="font-medium">{stats.percentage}%</span>
+                <span className="font-semibold">{stats.percentage}%</span>
               </div>
             )}
           </div>
@@ -52,7 +43,7 @@ export default function Header({ stats, onCameraOpen }: HeaderProps) {
             <button
               type="button"
               onClick={onCameraOpen}
-              className="p-2 rounded-full bg-orange-500 hover:bg-orange-600 text-white transition-colors shadow-sm"
+              className="p-2 rounded-full bg-[#bbebeb] hover:bg-[#a8dede] active:bg-[#95d1d1] text-white transition-all duration-200"
               aria-label="カメラでスキャン"
               title="カメラでスキャン"
             >
@@ -81,7 +72,7 @@ export default function Header({ stats, onCameraOpen }: HeaderProps) {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="p-2 rounded-full bg-white/70 hover:bg-white/90 text-orange-600 transition-colors shadow-sm"
+                className="p-2 rounded-full bg-[#f6f7f8] hover:bg-[#eef0f1] text-[#7ab8b8] transition-all duration-200"
                 aria-label="ログアウト"
                 title="ログアウト"
               >
@@ -104,7 +95,7 @@ export default function Header({ stats, onCameraOpen }: HeaderProps) {
 
             <Link
               href="/settings"
-              className="p-2 rounded-full bg-white/70 hover:bg-white/90 text-orange-600 transition-colors shadow-sm"
+              className="p-2 rounded-full bg-[#f6f7f8] hover:bg-[#eef0f1] text-[#7ab8b8] transition-all duration-200"
               aria-label="設定"
             >
               <svg
