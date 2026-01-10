@@ -63,8 +63,8 @@ export default function AppShell({ children }: AppShellProps) {
   const [stats, setStats] = useState<CollectionStats | undefined>();
   const [error, setError] = useState<string | null>(null);
 
-  // データ取得関数
-  const fetchData = useCallback(async () => {
+  // データ取得関数（リトライ機能付き）
+  const fetchData = useCallback(async (retryCount = 0) => {
     try {
       setError(null);
 
@@ -103,6 +103,14 @@ export default function AppShell({ children }: AppShellProps) {
       setDataLoaded(true);
     } catch (err) {
       console.error('Failed to fetch data:', err);
+
+      // 認証エラーの場合、最大3回リトライ（セッション反映待ち）
+      if (retryCount < 3) {
+        console.log(`Retrying data fetch... (${retryCount + 1}/3)`);
+        await new Promise(resolve => setTimeout(resolve, 500)); // 500ms待機
+        return fetchData(retryCount + 1);
+      }
+
       setError('データの取得に失敗しました');
       setDataLoaded(true); // エラーでも完了扱い
     }
