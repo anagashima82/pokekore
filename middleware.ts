@@ -7,18 +7,28 @@ const publicPaths = ['/login', '/signup', '/auth/callback', '/auth/confirm', '/p
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // 静的ファイル、API、認証パスはスキップ
+  // 静的ファイルはスキップ
   if (
     pathname.startsWith('/_next') ||
-    pathname.startsWith('/api') ||
     pathname.startsWith('/cards') ||
     pathname.startsWith('/icons') ||
     pathname === '/manifest.json' ||
     pathname === '/sw.js' ||
-    pathname === '/ads.txt' ||
-    publicPaths.some((path) => pathname.startsWith(path))
+    pathname === '/ads.txt'
   ) {
     return NextResponse.next();
+  }
+
+  // APIルートはセッション更新のみ行い、認証チェックはAPI側で行う
+  if (pathname.startsWith('/api')) {
+    const { supabaseResponse } = await updateSession(request);
+    return supabaseResponse;
+  }
+
+  // 公開パスはセッション更新のみ
+  if (publicPaths.some((path) => pathname.startsWith(path))) {
+    const { supabaseResponse } = await updateSession(request);
+    return supabaseResponse;
   }
 
   const { supabaseResponse, user } = await updateSession(request);
