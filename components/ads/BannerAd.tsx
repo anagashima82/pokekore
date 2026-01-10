@@ -51,16 +51,18 @@ export default function BannerAd({ adSlot = '1234567890' }: BannerAdProps) {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 safe-area-bottom">
-      <ins
-        ref={adRef}
-        className="adsbygoogle"
-        style={{ display: 'block', width: '100%', height: '50px' }}
-        data-ad-client={process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID}
-        data-ad-slot={adSlot}
-        data-ad-format="horizontal"
-        data-full-width-responsive="true"
-        data-ad-test={process.env.NODE_ENV === 'development' ? 'on' : undefined}
-      />
+      <div className="h-[50px] max-h-[50px] overflow-hidden">
+        <ins
+          ref={adRef}
+          className="adsbygoogle"
+          style={{ display: 'block', width: '100%', height: '50px' }}
+          data-ad-client={process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID}
+          data-ad-slot={adSlot}
+          data-ad-format="horizontal"
+          data-full-width-responsive="true"
+          data-ad-test={process.env.NODE_ENV === 'development' ? 'on' : undefined}
+        />
+      </div>
     </div>
   );
 }

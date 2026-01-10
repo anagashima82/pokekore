@@ -4,6 +4,7 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 @theme inline {
@@ -21,18 +22,42 @@ body {
 }
 
 /* モバイルブラウザの100vh問題対応 */
-html, body {
+html {
+  height: -webkit-fill-available;
+  height: 100%;
+}
+
+body {
   min-height: -webkit-fill-available;
   min-height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* Safe area padding for iPhone notch/home indicator */
 .safe-area-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 0);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* スクロール可能なコンテンツエリア */
+/* バナー広告用の下パディング（60px + safe area） */
+.pb-banner-safe {
+  padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+}
+
+/* スクロール可能なコンテンツエリア - dvhを優先 */
 .min-h-screen {
   min-height: 100vh;
-  min-height: 100dvh; /* Dynamic viewport height for mobile */
+}
+
+@supports (min-height: 100dvh) {
+  .min-h-screen {
+    min-height: 100dvh;
+  }
+}
+
+/* iOS Safari PWA用の追加対応 */
+@supports (-webkit-touch-callout: none) {
+  .min-h-screen {
+    min-height: -webkit-fill-available;
+  }
 }

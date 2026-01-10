@@ -278,7 +278,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f6f7f8] pb-[60px]">
+    <div className="min-h-screen bg-[#f6f7f8] pb-banner-safe">
       <Header stats={stats} onCameraOpen={() => setShowCameraScanner(true)} />
       <FilterBar
         series={series}
