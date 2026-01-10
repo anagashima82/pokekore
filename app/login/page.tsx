@@ -5,6 +5,21 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 
+// スタイル定数
+const styles = {
+  // カード共通スタイル
+  card: 'bg-white rounded-[16px] border border-[#e8eaeb] shadow-[0_2px_8px_rgba(0,0,0,0.04)]',
+  // ボタン共通スタイル
+  buttonPrimary: 'w-full flex justify-center py-3 px-4 rounded-[999px] text-sm font-medium text-white bg-[#bbebeb] hover:bg-[#a8dede] active:bg-[#95d1d1] focus:outline-none focus:ring-[4px] focus:ring-[rgba(187,235,235,0.55)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200',
+  buttonSecondary: 'w-full flex items-center justify-center gap-3 py-3 px-4 rounded-[999px] border border-[#e8eaeb] bg-white text-sm font-medium text-[#585e5f] hover:bg-[#f6f7f8] active:bg-[#eef0f1] focus:outline-none focus:ring-[4px] focus:ring-[rgba(187,235,235,0.55)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200',
+  // 入力欄スタイル
+  input: 'appearance-none block w-full px-4 py-3 border border-[#e8eaeb] rounded-[12px] text-[#585e5f] placeholder-[#a0a5a7] focus:outline-none focus:border-[#bbebeb] focus:ring-[4px] focus:ring-[rgba(187,235,235,0.55)] text-sm transition-all duration-200',
+  // ラベルスタイル
+  label: 'block text-sm font-medium text-[#585e5f] mb-2',
+  // リンクスタイル
+  link: 'text-sm text-[#7ab8b8] hover:text-[#5fa3a3] transition-colors duration-200',
+};
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -58,61 +73,50 @@ function LoginForm() {
   };
 
   return (
-    <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-      <form className="space-y-6" onSubmit={handleLogin}>
+    <div className={`${styles.card} py-8 px-6`}>
+      <form className="space-y-5" onSubmit={handleLogin}>
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
+          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-[12px] text-sm">
             {error}
           </div>
         )}
 
         <div>
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium text-gray-700"
-          >
+          <label htmlFor="email" className={styles.label}>
             メールアドレス
           </label>
-          <div className="mt-1">
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            />
-          </div>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className={styles.input}
+            placeholder="example@email.com"
+          />
         </div>
 
         <div>
-          <label
-            htmlFor="password"
-            className="block text-sm font-medium text-gray-700"
-          >
+          <label htmlFor="password" className={styles.label}>
             パスワード
           </label>
-          <div className="mt-1">
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            />
-          </div>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className={styles.input}
+            placeholder="パスワードを入力"
+          />
         </div>
 
         <div className="flex items-center justify-end">
-          <Link
-            href="/auth/reset-password"
-            className="text-sm text-blue-600 hover:text-blue-500"
-          >
+          <Link href="/auth/reset-password" className={styles.link}>
             パスワードをお忘れですか？
           </Link>
         </div>
@@ -121,7 +125,7 @@ function LoginForm() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className={styles.buttonPrimary}
           >
             {isLoading ? 'ログイン中...' : 'ログイン'}
           </button>
@@ -131,10 +135,10 @@ function LoginForm() {
       <div className="mt-6">
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300" />
+            <div className="w-full border-t border-[#e8eaeb]" />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">または</span>
+            <span className="px-3 bg-white text-[#a0a5a7]">または</span>
           </div>
         </div>
 
@@ -143,7 +147,7 @@ function LoginForm() {
             type="button"
             onClick={handleGoogleLogin}
             disabled={isGoogleLoading}
-            className="w-full flex items-center justify-center gap-3 py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className={styles.buttonSecondary}
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
@@ -168,10 +172,7 @@ function LoginForm() {
         </div>
 
         <div className="mt-6 text-center">
-          <Link
-            href="/signup"
-            className="text-sm text-blue-600 hover:text-blue-500"
-          >
+          <Link href="/signup" className={styles.link}>
             アカウントをお持ちでない方はこちら
           </Link>
         </div>
@@ -183,14 +184,14 @@ function LoginForm() {
 // 機能紹介カード
 function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
   return (
-    <div className="bg-white rounded-xl p-4 shadow-sm">
+    <div className={`${styles.card} p-4`}>
       <div className="flex items-start gap-3">
-        <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-500">
+        <div className="flex-shrink-0 w-10 h-10 bg-[#e8f7f7] rounded-[12px] flex items-center justify-center text-[#7ab8b8]">
           {icon}
         </div>
         <div>
-          <h3 className="font-semibold text-gray-800 text-sm">{title}</h3>
-          <p className="text-gray-600 text-xs mt-1">{description}</p>
+          <h3 className="font-semibold text-[#585e5f] text-sm">{title}</h3>
+          <p className="text-[#8a9092] text-xs mt-1 leading-relaxed">{description}</p>
         </div>
       </div>
     </div>
@@ -199,22 +200,22 @@ function FeatureCard({ icon, title, description }: { icon: React.ReactNode; titl
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-50">
+    <div className="min-h-screen bg-[#f6f7f8] font-[family-name:var(--font-noto-sans-jp),var(--font-inter),sans-serif]">
       {/* ヒーローセクション */}
-      <div className="pt-8 pb-6 px-4 text-center">
-        <h1 className="text-4xl font-bold text-blue-500 mb-2">ポケコレ</h1>
-        <p className="text-gray-600 text-sm">ポケモンカード コレクション管理アプリ</p>
+      <div className="pt-10 pb-8 px-4 text-center">
+        <h1 className="text-4xl font-bold text-[#7ab8b8] mb-2 tracking-tight">ポケコレ</h1>
+        <p className="text-[#8a9092] text-sm">ポケモンカード コレクション管理アプリ</p>
       </div>
 
       {/* アプリ説明 */}
       <div className="px-4 pb-6">
-        <div className="max-w-md mx-auto bg-white rounded-2xl shadow-lg overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-6 text-white text-center">
+        <div className={`max-w-md mx-auto ${styles.card} overflow-hidden`}>
+          <div className="bg-gradient-to-r from-[#bbebeb] to-[#a8dede] px-5 py-6 text-white text-center">
             <p className="text-lg font-medium">あなたのポケカコレクションを</p>
             <p className="text-lg font-medium">かんたん管理</p>
           </div>
-          <div className="p-4">
-            <p className="text-gray-600 text-sm leading-relaxed">
+          <div className="p-5">
+            <p className="text-[#585e5f] text-sm leading-relaxed">
               ポケコレは、ポケモンカードのコレクション状況を視覚的に管理できる無料アプリです。
               AR（アートレア）カードの所持状況をシリーズごとに一目で確認でき、
               カードラッシュの参考価格も表示されます。
@@ -226,7 +227,7 @@ export default function LoginPage() {
       {/* 機能紹介 */}
       <div className="px-4 pb-6">
         <div className="max-w-md mx-auto">
-          <h2 className="text-lg font-bold text-gray-800 mb-3 text-center">主な機能</h2>
+          <h2 className="text-lg font-bold text-[#585e5f] mb-4 text-center">主な機能</h2>
           <div className="space-y-3">
             <FeatureCard
               icon={
@@ -269,28 +270,28 @@ export default function LoginPage() {
       </div>
 
       {/* ログインフォーム */}
-      <div className="px-4 pb-6">
+      <div className="px-4 pb-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
-          <h2 className="text-center text-xl font-semibold text-gray-900 mb-4">
+          <h2 className="text-center text-xl font-semibold text-[#585e5f] mb-5">
             ログイン
           </h2>
-          <Suspense fallback={<div className="animate-pulse bg-gray-200 h-64 rounded-lg" />}>
+          <Suspense fallback={<div className="animate-pulse bg-[#e8eaeb] h-64 rounded-[16px]" />}>
             <LoginForm />
           </Suspense>
         </div>
       </div>
 
       {/* フッター */}
-      <footer className="bg-gray-100 py-6 px-4 mt-8">
+      <footer className="bg-[#eef0f1] py-6 px-4 mt-4">
         <div className="max-w-md mx-auto">
-          <div className="flex justify-center gap-6 text-sm text-gray-600 mb-4">
-            <Link href="/privacy" className="hover:text-blue-500">プライバシーポリシー</Link>
-            <Link href="/terms" className="hover:text-blue-500">利用規約</Link>
+          <div className="flex justify-center gap-6 text-sm text-[#8a9092] mb-4">
+            <Link href="/privacy" className="hover:text-[#7ab8b8] transition-colors duration-200">プライバシーポリシー</Link>
+            <Link href="/terms" className="hover:text-[#7ab8b8] transition-colors duration-200">利用規約</Link>
           </div>
-          <p className="text-center text-xs text-gray-500">
+          <p className="text-center text-xs text-[#a0a5a7]">
             ポケコレはポケモンカードのコレクション管理を目的とした非公式アプリです。
           </p>
-          <p className="text-center text-xs text-gray-400 mt-2">
+          <p className="text-center text-xs text-[#b8bcbe] mt-2">
             &copy; 2025 ポケコレ
           </p>
         </div>
