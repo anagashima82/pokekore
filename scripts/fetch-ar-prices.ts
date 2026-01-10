@@ -10,61 +10,17 @@
 
 import { createClient } from '@supabase/supabase-js';
 
+// series_masterから取得したシリーズ情報を格納
+let SERIES_TOTAL_CARDS: Record<string, number> = {};
+
+// プロモカード用の特別な値
+const PROMO_SERIES = ['promo', 'promo_sv'];
+
 // カードラッシュのベースURL
 const CARDRUSH_BASE_URL = 'https://www.cardrush-pokemon.jp';
 
 // スクレイピング間の遅延（ミリ秒）
 const SCRAPE_DELAY_MS = 500;
-
-// シリーズごとのノーマルカード総枚数
-// カードラッシュの検索形式: AR 079/078 SV1S の「/078」部分に使用
-const SERIES_TOTAL_CARDS: Record<string, number | string> = {
-  // ソード＆シールドシリーズ
-  's12a': 172,
-
-  // スカーレット＆バイオレットシリーズ
-  'sv1s': 78,
-  'sv1v': 78,
-  'sv1a': 73,
-  'sv2d': 71,
-  'sv2p': 71,
-  'sv2a': 165,
-  'sv3': 108,
-  'sv3a': 62,
-  'sv4k': 66,
-  'sv4m': 66,
-  'sv4a': 190,
-  'sv5k': 71,
-  'sv5m': 71,
-  'sv5a': 66,
-  'sv6': 101,
-  'sv6a': 64,
-  'sv7': 102,
-  'sv7a': 64,
-  'sv8': 106,
-  'sv8a': 90,
-  'sv9': 38,
-  'sv9a': 96,
-  'sv10': 28,
-  'sv11w': 80,
-  'sv11b': 80,
-  'svg': 28,
-  'svod': 20,
-  'svom': 20,
-
-  // ポケモンカード ポケットシリーズ
-  'm1s': 86,
-  'm1l': 86,
-  'mbd': 20,
-  'mbg': 20,
-  'm2': 86,
-  'm2a': 86,
-  'mc': 60,
-
-  // プロモカード
-  'promo': 'SV-P',
-  'promo_sv': 'SV-P',
-};
 
 // Supabase設定
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
@@ -105,13 +61,13 @@ async function scrapeCardRushPrice(
     const upperSeriesCode = seriesCode.toUpperCase();
     const lowerSeriesCode = seriesCode.toLowerCase();
 
-    // シリーズの総枚数を取得
+    // シリーズの総枚数を取得（series_masterから）
     const totalCards = SERIES_TOTAL_CARDS[lowerSeriesCode];
 
     // 検索クエリを作成
     // 形式: AR 079/078 SV1S または AR 232/SV-P（プロモ）
     let searchQuery: string;
-    if (upperSeriesCode === 'PROMO' || totalCards === 'SV-P') {
+    if (PROMO_SERIES.includes(lowerSeriesCode)) {
       // プロモカード: AR 232/SV-P
       searchQuery = rarity ? `${rarity} ${paddedCardNumber}/SV-P` : `${paddedCardNumber}/SV-P`;
     } else if (totalCards !== undefined && rarity) {
@@ -202,6 +158,23 @@ async function scrapeCardRushPrice(
 
 async function main() {
   console.log('ARカードの価格取得を開始します...\n');
+
+  // series_masterからシリーズ情報を取得
+  console.log('シリーズ情報を読み込み中...');
+  const { data: seriesMaster, error: seriesError } = await supabase
+    .from('series_master')
+    .select('code, total_normal_cards');
+
+  if (seriesError) {
+    console.error('シリーズ情報取得エラー:', seriesError);
+    process.exit(1);
+  }
+
+  // SERIES_TOTAL_CARDSを構築
+  for (const series of seriesMaster || []) {
+    SERIES_TOTAL_CARDS[series.code.toLowerCase()] = series.total_normal_cards;
+  }
+  console.log(`${Object.keys(SERIES_TOTAL_CARDS).length}シリーズの情報を読み込みました\n`);
 
   // ARカードを取得
   const { data: cards, error: cardsError } = await supabase

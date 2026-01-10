@@ -19,3 +19,20 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* モバイルブラウザの100vh問題対応 */
+html, body {
+  min-height: -webkit-fill-available;
+  min-height: 100%;
+}
+
+/* Safe area padding for iPhone notch/home indicator */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* スクロール可能なコンテンツエリア */
+.min-h-screen {
+  min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height for mobile */
+}
