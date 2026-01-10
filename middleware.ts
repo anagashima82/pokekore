@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware';
 
 // 認証不要のパス
-const publicPaths = ['/login', '/signup', '/auth/callback', '/auth/confirm'];
+const publicPaths = ['/login', '/signup', '/auth/callback', '/auth/confirm', '/privacy', '/terms'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
