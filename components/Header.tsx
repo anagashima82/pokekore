@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
@@ -13,11 +14,18 @@ interface HeaderProps {
 export default function Header({ stats, onCameraOpen }: HeaderProps) {
   const router = useRouter();
   const { user, signOut } = useAuth();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
-    await signOut();
-    router.push('/login');
-    router.refresh();
+    setIsLoggingOut(true);
+    try {
+      await signOut();
+      router.push('/login');
+      router.refresh();
+    } catch (error) {
+      console.error('Logout failed:', error);
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -72,24 +80,33 @@ export default function Header({ stats, onCameraOpen }: HeaderProps) {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="p-2 rounded-full bg-[#f6f7f8] hover:bg-[#eef0f1] text-[#7ab8b8] transition-all duration-200"
+                disabled={isLoggingOut}
+                className={`p-2 rounded-full transition-all duration-200 ${
+                  isLoggingOut
+                    ? 'bg-[#e8eaeb] cursor-not-allowed'
+                    : 'bg-[#f6f7f8] hover:bg-[#eef0f1]'
+                } text-[#7ab8b8]`}
                 aria-label="ログアウト"
                 title="ログアウト"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                  className="w-6 h-6"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"
-                  />
-                </svg>
+                {isLoggingOut ? (
+                  <div className="w-6 h-6 animate-spin rounded-full border-2 border-[#bbebeb] border-t-transparent" />
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-6 h-6"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"
+                    />
+                  </svg>
+                )}
               </button>
             )}
 
