@@ -1,10 +1,14 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, Fragment } from 'react';
 import SeriesSection from './SeriesSection';
 import ScrollScrubber from './ScrollScrubber';
+import FeedAd from './ads/FeedAd';
 import { getSeriesOrder } from '@/lib/constants';
 import type { CardWithOwnership, FilterState } from '@/types';
+
+// 広告を挿入するシリーズ間隔（3シリーズごとに1つ）
+const AD_INTERVAL = 3;
 
 interface CardGridProps {
   cards: CardWithOwnership[];
@@ -107,20 +111,28 @@ export default function CardGrid({
   return (
     <>
       <div className="pb-4">
-        {groupedCards.map(([seriesCode, seriesCards]) => {
+        {groupedCards.map(([seriesCode, seriesCards], index) => {
           const stats = seriesStats.get(seriesCode);
+          const showAd = (index + 1) % AD_INTERVAL === 0 && index < groupedCards.length - 1;
+
           return (
-            <SeriesSection
-              key={seriesCode}
-              seriesCode={seriesCode}
-              cards={seriesCards}
-              totalSeriesCards={stats?.total ?? seriesCards.length}
-              ownedSeriesCards={stats?.owned ?? 0}
-              onToggle={onToggle}
-              onFavoriteToggle={onFavoriteToggle}
-              updatingCardIds={updatingCardIds}
-              showGrayscale={filter.showGrayscale}
-            />
+            <Fragment key={seriesCode}>
+              <SeriesSection
+                seriesCode={seriesCode}
+                cards={seriesCards}
+                totalSeriesCards={stats?.total ?? seriesCards.length}
+                ownedSeriesCards={stats?.owned ?? 0}
+                onToggle={onToggle}
+                onFavoriteToggle={onFavoriteToggle}
+                updatingCardIds={updatingCardIds}
+                showGrayscale={filter.showGrayscale}
+              />
+              {showAd && (
+                <div className="px-4 py-2">
+                  <FeedAd />
+                </div>
+              )}
+            </Fragment>
           );
         })}
       </div>

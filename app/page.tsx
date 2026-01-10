@@ -1,11 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import Header from '@/components/Header';
 import FilterBar from '@/components/FilterBar';
 import CardGrid from '@/components/CardGrid';
+import BannerAd from '@/components/ads/BannerAd';
+import InterstitialAd from '@/components/ads/InterstitialAd';
 import { usePreloadedData } from '@/components/AppShell';
+import { useInterstitialAd } from '@/hooks/useInterstitialAd';
 
 // カメラスキャナーは動的インポート（SSR無効）
 const CameraScanner = dynamic(() => import('@/components/CameraScanner'), {
@@ -44,6 +47,18 @@ export default function Home() {
   });
   const [updatingCardIds, setUpdatingCardIds] = useState<Set<string>>(new Set());
   const [showCameraScanner, setShowCameraScanner] = useState(false);
+
+  // インタースティシャル広告
+  const { isShowing: showInterstitial, showInterstitial: triggerInterstitial, closeAd } = useInterstitialAd();
+
+  // アプリ起動時にインタースティシャル広告を表示（1日1回）
+  useEffect(() => {
+    // 少し遅延させてから表示
+    const timer = setTimeout(() => {
+      triggerInterstitial();
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [triggerInterstitial]);
 
   // プリロードデータが更新されたら同期
   if (preloadedCollections !== collections && preloadedCollections.size > 0 && collections.size === 0) {
@@ -263,7 +278,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-[60px]">
       <Header stats={stats} onCameraOpen={() => setShowCameraScanner(true)} />
       <FilterBar
         series={series}
@@ -288,6 +303,12 @@ export default function Home() {
           onClose={() => setShowCameraScanner(false)}
         />
       )}
+
+      {/* バナー広告（画面下部固定） */}
+      <BannerAd />
+
+      {/* インタースティシャル広告 */}
+      {showInterstitial && <InterstitialAd onClose={closeAd} />}
     </div>
   );
 }
