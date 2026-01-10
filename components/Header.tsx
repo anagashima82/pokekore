@@ -76,7 +76,7 @@ export default function Header({ stats, onCameraOpen }: HeaderProps) {
               </svg>
             </button>
 
-            {user && (
+            {(user || isLoggingOut) && (
               <button
                 type="button"
                 onClick={handleLogout}
