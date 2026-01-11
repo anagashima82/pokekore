@@ -116,6 +116,29 @@ export default function AppShell({ children }: AppShellProps) {
     }
   }, []);
 
+  // iOSのviewport高さ問題に対応
+  useEffect(() => {
+    const setViewportHeight = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+
+    // 初期設定
+    setViewportHeight();
+
+    // リサイズ・回転時に再計算
+    window.addEventListener('resize', setViewportHeight);
+    window.addEventListener('orientationchange', () => {
+      // orientationchange後に少し遅延させて正確な値を取得
+      setTimeout(setViewportHeight, 100);
+    });
+
+    return () => {
+      window.removeEventListener('resize', setViewportHeight);
+      window.removeEventListener('orientationchange', setViewportHeight);
+    };
+  }, []);
+
   useEffect(() => {
     // 常にデータを取得する
     fetchData();

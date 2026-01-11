@@ -44,20 +44,16 @@ body {
   padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
 }
 
-/* スクロール可能なコンテンツエリア - dvhを優先 */
+/* スクロール可能なコンテンツエリア */
+/* JSで計算した--vhを優先し、フォールバックとして100vh/dvhを使用 */
 .min-h-screen {
   min-height: 100vh;
+  min-height: calc(var(--vh, 1vh) * 100);
 }
 
 @supports (min-height: 100dvh) {
   .min-h-screen {
     min-height: 100dvh;
-  }
-}
-
-/* iOS Safari PWA用の追加対応 */
-@supports (-webkit-touch-callout: none) {
-  .min-h-screen {
-    min-height: -webkit-fill-available;
+    min-height: calc(var(--vh, 1vh) * 100);
   }
 }
